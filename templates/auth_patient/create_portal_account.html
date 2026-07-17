@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Create Patient Portal Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#dff8f8,#e8f0ff,#efe8ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.card{background:#fff;border-radius:20px;padding:2.5rem;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,180,180,.15)}
+.header{text-align:center;margin-bottom:1.75rem}
+.icon{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#00d4d4,#7c5cbf);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;box-shadow:0 8px 20px rgba(0,212,212,.3)}
+h1{font-size:1.4rem;font-weight:800;color:#1a2332}
+.sub{font-size:13px;color:#7a95a8;margin-top:5px}
+
+/* Patient info banner */
+.patient-banner{background:linear-gradient(135deg,rgba(0,212,212,.08),rgba(124,92,191,.06));border:1px solid rgba(0,212,212,.2);border-radius:12px;padding:14px 18px;margin-bottom:1.5rem;display:flex;align-items:center;gap:14px}
+.pat-av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0}
+.pat-name{font-size:14px;font-weight:700;color:#1a2332}
+.pat-id{font-size:12px;color:#7a95a8;margin-top:2px}
+
+.alert{padding:11px 14px;border-radius:10px;margin-bottom:1rem;font-size:13px;font-weight:500;border-left:3px solid}
+.alert-danger{background:rgba(232,68,90,.07);border-color:#e8445a;color:#c0243a}
+.alert-success{background:rgba(0,200,150,.07);border-color:#00c896;color:#007a5a}
+.alert-info{background:rgba(0,212,212,.07);border-color:#00d4d4;color:#007a7a}
+.alert-warning{background:rgba(245,166,35,.07);border-color:#f5a623;color:#8a6200}
+
+.section-title{font-size:11px;font-weight:700;color:#00b8b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.85rem;padding-bottom:8px;border-bottom:2px solid rgba(0,212,212,.1)}
+
+.fg{margin-bottom:.9rem}
+.fg label{display:block;font-size:11px;font-weight:700;color:#3d5166;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.fg input{width:100%;padding:11px 14px;background:#f4fbfc;border:1.5px solid rgba(0,212,212,.18);border-radius:10px;font-size:13px;color:#1a2332;font-family:'Inter',sans-serif;transition:all .15s}
+.fg input:focus{outline:none;border-color:#00d4d4;box-shadow:0 0 0 3px rgba(0,212,212,.1);background:#fff}
+.fg .hint{font-size:11px;color:#b0c4ce;margin-top:4px}
+.req{color:#e8445a}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+
+/* Credentials preview box */
+.creds-box{background:#f4fbfc;border:1.5px solid rgba(0,212,212,.2);border-radius:12px;padding:14px 16px;margin-bottom:1.25rem}
+.creds-title{font-size:11px;font-weight:700;color:#00b8b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.cred-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,212,212,.08)}
+.cred-row:last-child{border:none}
+.cred-label{font-size:11px;color:#7a95a8;font-weight:600}
+.cred-value{font-size:13px;font-family:monospace;color:#1a2332;font-weight:700;background:rgba(0,212,212,.1);padding:2px 10px;border-radius:6px}
+
+.btn-row{display:flex;gap:8px;margin-top:1.25rem}
+.btn{flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;border:none;transition:all .15s;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-primary{background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;box-shadow:0 4px 14px rgba(0,212,212,.3)}
+.btn-primary:hover{opacity:.92;transform:translateY(-1px)}
+.btn-ghost{background:#f4fbfc;color:#7a95a8;border:1.5px solid rgba(0,212,212,.2)}
+.btn-ghost:hover{color:#00b8b8;border-color:#00d4d4}
+
+.note-box{background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:12px 14px;font-size:12px;color:#8a6200;line-height:1.6;margin-bottom:1rem}
+.note-box strong{color:#6a4200}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="icon">🏥</div>
+    <h1>Create Patient Portal Account</h1>
+    <p class="sub">The patient can use these credentials to log in at the Patient Portal</p>
+  </div>
+
+  {% with messages=get_flashed_messages(with_categories=true) %}
+    {% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+
+  <!-- Patient banner -->
+  <div class="patient-banner">
+    <div class="pat-av">{{ patient.full_name[0] }}</div>
+    <div>
+      <div class="pat-name">{{ patient.full_name }}</div>
+      <div class="pat-id">{{ patient.patient_id }} &nbsp;·&nbsp; {{ patient.gender }} &nbsp;·&nbsp; Blood: {{ patient.blood_group or '—' }}</div>
+      <div class="pat-id" style="margin-top:2px">📞 {{ patient.phone or '—' }}</div>
+    </div>
+  </div>
+
+  <!-- Suggested credentials preview -->
+  <div class="creds-box">
+    <div class="creds-title">📋 Suggested Login Credentials</div>
+    <div class="cred-row">
+      <span class="cred-label">Username</span>
+      <span class="cred-value">{{ username }}</span>
+    </div>
+    <div class="cred-row">
+      <span class="cred-label">Default Password</span>
+      <span class="cred-value">{{ default_password }}</span>
+    </div>
+    <div class="cred-row">
+      <span class="cred-label">Portal URL</span>
+      <span class="cred-value">127.0.0.1:5000/patient/login</span>
+    </div>
+  </div>
+
+  <div class="note-box">
+    <strong>📌 Instructions for receptionist:</strong><br>
+    You can use the suggested username and password above, or change them below.
+    Write down the final username and password and give them to the patient.
+    The patient uses these to log in at the Patient Portal — no MFA required.
+  </div>
+
+  <form method="POST">
+    <p class="section-title">Account Credentials</p>
+
+    <div class="fg">
+      <label>Username <span class="req">*</span></label>
+      <input type="text" name="username" value="{{ username }}" required
+             placeholder="Patient's login username">
+      <p class="hint">Auto-generated from patient name. You can change it.</p>
+    </div>
+
+    <div class="fg">
+      <label>Email Address <span class="req">*</span></label>
+      <input type="email" name="email" required
+             placeholder="Patient's email (if available)"
+             value="{{ patient.phone and '' or '' }}">
+      <p class="hint">If patient has no email, use a placeholder like username@emr.local</p>
+    </div>
+
+    <div class="row">
+      <div class="fg">
+        <label>Password <span class="req">*</span></label>
+        <input type="text" name="password" value="{{ default_password }}" required
+               placeholder="Min 6 characters">
+        <p class="hint">Write this down for the patient</p>
+      </div>
+      <div class="fg">
+        <label>Confirm Password <span class="req">*</span></label>
+        <input type="text" name="confirm_password" value="{{ default_password }}" required
+               placeholder="Repeat password">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a href="javascript:history.back()" class="btn btn-ghost">← Cancel</a>
+      <button type="submit" class="btn btn-primary">✓ Create Portal Account</button>
+    </div>
+  </form>
+</div>
+</body>
+</html>

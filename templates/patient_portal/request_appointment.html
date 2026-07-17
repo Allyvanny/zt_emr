@@ -1,0 +1,61 @@
+{% extends "patient_portal/base.html" %}
+{% block title %}{{ t('request_appt_title') }}{% endblock %}
+{% block page_title %}{{ t('request_appt_title') }}{% endblock %}
+{% block page_sub %}{{ t('request_appt_sub') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><a href="{{ url_for('patient_portal.appointment_requests') }}" class="breadcrumb">{{ t('breadcrumb_my_appts') }}</a><h2>{{ t('request_an_appt_h2') }}</h2></div>
+</div>
+<div class="form-card">
+  <form method="POST">
+    <p class="form-section-title">{{ t('appt_details_section') }}</p>
+    <div class="form-group">
+      <label>{{ t('preferred_doctor') }}</label>
+      <select name="preferred_doctor_id">
+        <option value="">{{ t('any_available_doctor_opt') }}</option>
+        {% for doc in doctors %}
+        <option value="{{ doc.id }}">{{ doc.full_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>{{ t('urgency_level') }} <span class="req">*</span></label>
+      <select name="urgency" required>
+        <option value="routine">{{ t('urgency_routine') }}</option>
+        <option value="urgent">{{ t('urgency_urgent') }}</option>
+        <option value="emergency">{{ t('urgency_emergency') }}</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>{{ t('preferred_datetime') }}</label>
+        <input type="datetime-local" name="preferred_date">
+        <p class="form-hint">{{ t('first_choice_hint') }}</p>
+      </div>
+      <div class="form-group">
+        <label>{{ t('alt_datetime') }}</label>
+        <input type="datetime-local" name="preferred_date_2">
+        <p class="form-hint">{{ t('second_choice_hint') }}</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>{{ t('reason_for_appt') }} <span class="req">*</span></label>
+      <textarea name="reason" rows="5" required placeholder="{{ t('reason_placeholder') }}"></textarea>
+      <p class="form-hint">{{ t('reason_hint') }}</p>
+    </div>
+    <div style="background:rgba(0,212,212,.05);border:1px solid rgba(0,212,212,.12);border-radius:10px;padding:12px 16px;margin-bottom:1rem">
+      <p style="font-size:13px;font-weight:600;color:#1a2332;margin-bottom:4px">{{ t('whats_next') }}</p>
+      <ol style="font-size:12px;color:#7a95a8;padding-left:1.2rem;line-height:2">
+        <li>{{ t('next_step_1') }}</li>
+        <li>{{ t('next_step_2') }}</li>
+        <li>{{ t('next_step_3') }}</li>
+        <li>{{ t('next_step_4') }}</li>
+      </ol>
+    </div>
+    <div class="form-actions">
+      <a href="{{ url_for('patient_portal.appointment_requests') }}" class="btn btn-ghost">{{ t('cancel') }}</a>
+      <button type="submit" class="btn btn-primary">{{ t('submit_request_btn') }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

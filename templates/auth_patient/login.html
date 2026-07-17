@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Patient Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#dff8f8,#e8f0ff,#efe8ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.card{background:#fff;border-radius:24px;padding:2.5rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,180,180,.15)}
+.logo{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,#00d4d4,#7c5cbf);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(0,212,212,.35)}
+h1{text-align:center;font-size:1.55rem;font-weight:800;color:#1a2332}
+.sub{text-align:center;font-size:13px;color:#7a95a8;margin-top:5px}
+.tag{display:inline-block;background:rgba(0,212,212,.1);color:#00b8b8;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:3px 12px;border-radius:100px;border:1px solid rgba(0,212,212,.2);margin:10px auto 1.5rem;display:block;width:fit-content}
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.5rem}
+.feat{background:#f4fbfc;border-radius:10px;padding:10px;text-align:center;font-size:11px;color:#3d5166;font-weight:500;border:1px solid rgba(0,212,212,.1)}
+.feat .ic{font-size:18px;margin-bottom:3px}
+.alert{padding:11px 14px;border-radius:10px;margin-bottom:1rem;font-size:13px;font-weight:500;border-left:3px solid}
+.alert-danger{background:rgba(232,68,90,.07);border-color:#e8445a;color:#c0243a}
+.alert-success{background:rgba(0,200,150,.07);border-color:#00c896;color:#007a5a}
+.alert-info{background:rgba(0,212,212,.07);border-color:#00d4d4;color:#007a7a}
+.fg{margin-bottom:1rem}
+.fg label{display:block;font-size:11px;font-weight:700;color:#3d5166;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.fg input{width:100%;padding:11px 15px;background:#f4fbfc;border:1.5px solid rgba(0,212,212,.18);border-radius:11px;font-size:14px;color:#1a2332;font-family:'Inter',sans-serif;transition:all .15s}
+.fg input:focus{outline:none;border-color:#00d4d4;box-shadow:0 0 0 3px rgba(0,212,212,.1);background:#fff}
+.btn{width:100%;padding:13px;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 16px rgba(0,212,212,.3);margin-top:.5rem;transition:all .15s}
+.btn:hover{opacity:.92;transform:translateY(-1px)}
+.div{display:flex;align-items:center;gap:10px;margin:1.25rem 0;color:#b0c4ce;font-size:12px}
+.div::before,.div::after{content:'';flex:1;height:1px;background:rgba(0,212,212,.12)}
+.reg-link{text-align:center;font-size:13px;color:#7a95a8}
+.reg-link a{color:#00b8b8;font-weight:600;text-decoration:none}
+.staff-link{text-align:center;margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(0,212,212,.1)}
+.staff-link a{font-size:12px;color:#b0c4ce;text-decoration:none}
+.staff-link a:hover{color:#7c5cbf}
+.lang-switch{display:flex;justify-content:center;gap:2px;background:#f4fbfc;border:1px solid rgba(0,212,212,.18);border-radius:100px;padding:2px;width:fit-content;margin:0 auto 1.1rem}
+.lang-switch a{padding:4px 14px;border-radius:100px;font-size:11px;font-weight:700;text-decoration:none;color:#7a95a8;transition:all .15s}
+.lang-switch a.active{background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="lang-switch">
+    <a href="{{ url_for('patient_auth.set_language', lang='en') }}" class="{{ 'active' if current_lang=='en' }}">EN</a>
+    <a href="{{ url_for('patient_auth.set_language', lang='sw') }}" class="{{ 'active' if current_lang=='sw' }}">SW</a>
+  </div>
+  <div class="logo">🏥</div>
+  <h1>{{ t('patient_portal_title') }}</h1>
+  <span class="tag">{{ t('tagline_zt') }}</span>
+
+  {% with messages=get_flashed_messages(with_categories=true) %}
+    {% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="fg"><label>{{ t('username') }}</label><input type="text" name="username" placeholder="{{ t('your_username') }}" required autofocus></div>
+    <div class="fg"><label>{{ t('password') }}</label><input type="password" name="password" placeholder="{{ t('your_password') }}" required></div>
+    <button type="submit" class="btn">{{ t('sign_in') }}</button>
+  </form>
+
+  <div class="div">{{ t('new_here') }}</div>
+  <div class="reg-link">{{ t('no_account') }} <a href="{{ url_for('patient_auth.register') }}">{{ t('create_one_free') }}</a></div>
+  <div class="staff-link"><a href="{{ url_for('auth.login') }}">{{ t('staff_login') }}</a></div>
+</div>
+</body></html>

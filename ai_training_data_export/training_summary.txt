@@ -1,0 +1,53 @@
+ZERO TRUST EMR — AI MODEL TRAINING DATA SUMMARY
+Author: Alto Dezdel Kiyamba | MUST BCS/25
+============================================================
+
+1. DATA SOURCE
+   Database table: activity_logs (joined with users)
+   Total raw log entries used: 200
+   Number of distinct users:   8
+   Date range: 2026-05-24 10:03:26  to  2026-06-21 20:36:42
+
+   Users included:
+     - admin           (admin          ) : 79 log entries
+     - alto            (admin          ) : 10 log entries
+     - dr_john         (doctor         ) : 48 log entries
+     - lab_tech        (lab_technician ) : 24 log entries
+     - nurse_grace     (nurse          ) : 6 log entries
+     - pharmacist      (pharmacist     ) : 6 log entries
+     - receptionist    (receptionist   ) : 6 log entries
+     - rose            (doctor         ) : 21 log entries
+
+2. FEATURE ENGINEERING
+   Raw logs are grouped into 60-minute rolling windows per user.
+   For each window, 6 behavioural features are computed:
+     1. records_accessed    - patient records opened in the window
+     2. failed_logins       - number of failed actions/logins
+     3. off_hours_flag      - 1 if activity is before 7am or after 8pm
+     4. distinct_ips        - number of different IP addresses used
+     5. actions_per_minute  - speed/intensity of activity
+     6. after_midnight_flag - 1 if activity is between 12am-5am
+
+   Total feature vectors (training rows) produced: 35
+
+   Feature statistics:
+       records_accessed  failed_logins  off_hours_flag  distinct_ips  actions_per_minute  after_midnight_flag
+count            35.000           35.0          35.000        35.000              35.000               35.000
+mean              0.743            0.0           0.143         1.057               0.095                0.057
+std               1.291            0.0           0.355         0.236               0.077                0.236
+min               0.000            0.0           0.000         1.000               0.017                0.000
+25%               0.000            0.0           0.000         1.000               0.042                0.000
+50%               0.000            0.0           0.000         1.000               0.083                0.000
+75%               1.000            0.0           0.000         1.000               0.108                0.000
+max               4.000            0.0           1.000         2.000               0.367                1.000
+
+3. MODEL
+   Algorithm: Isolation Forest (unsupervised anomaly detection, scikit-learn)
+   Why unsupervised: we do not have labelled 'attack' examples, so the model
+   learns what NORMAL staff behaviour looks like and flags anything that
+   deviates significantly as higher risk.
+
+4. FILES IN THIS EXPORT
+   raw_activity_logs.csv     - the exact raw rows pulled from the database
+   engineered_features.csv   - the 6-feature vectors computed from those rows
+   training_summary.txt      - this report

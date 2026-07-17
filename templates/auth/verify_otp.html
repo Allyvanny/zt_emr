@@ -1,0 +1,29 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Verify Identity</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/main.css') }}"></head>
+<body class="auth-body">
+<div class="auth-container"><div class="auth-card">
+  <div class="otp-header"><div class="otp-icon">📱</div>
+    <h2 style="font-size:1.3rem;font-weight:800;color:var(--tx-1)">Identity Verification</h2>
+    <p style="color:var(--tx-3);font-size:13px;margin-top:6px">Risk-Based Multi-Factor Authentication</p>
+  </div>
+  {% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}{% endwith %}
+  {% if risk_score %}<div style="text-align:center;margin-bottom:1rem"><span class="risk-chip">⚠️ Risk: {{ (risk_score*100)|round|int }}% — {{ risk_reason }}</span></div>{% endif %}
+  <div class="otp-info-box"><strong>🔐 Code sent to:</strong><br><span style="font-family:'JetBrains Mono',monospace;font-size:14px">{{ masked_email }}</span><br><span style="font-size:12px;margin-top:4px;display:block">Enter 6-digit code below. Expires in 5 minutes.</span></div>
+  <form method="POST" action="{{ url_for('auth.verify_otp') }}">
+    <div class="otp-input-wrap"><input type="text" name="otp" class="otp-input" maxlength="6" placeholder="——————" required autofocus autocomplete="off" inputmode="numeric"></div>
+    <div class="otp-timer">Expires in <strong id="countdown">5:00</strong></div>
+    <button type="submit" class="btn btn-primary btn-full">✓ Verify Identity</button>
+  </form>
+  <div style="text-align:center;margin-top:1rem">
+    <form method="POST" action="{{ url_for('auth.resend_otp') }}" style="display:inline"><button type="submit" class="otp-resend-btn">↻ Resend code</button></form>
+    &nbsp;·&nbsp;<a href="{{ url_for('auth.login') }}" style="font-size:13px;color:var(--tx-3)">Back to login</a>
+  </div>
+  <div style="margin-top:1.5rem;text-align:center;font-size:11px;color:var(--tx-4)">Login from <strong>{{ user.last_location or 'Unknown' }}</strong> via <strong>{{ user.last_device or 'Unknown' }}</strong></div>
+</div></div>
+<script>
+let s=300;const el=document.getElementById('countdown');
+const t=setInterval(()=>{s--;if(s<=0){clearInterval(t);el.textContent='Expired';el.style.color='#ef4444';return;}const m=Math.floor(s/60),sec=s%60;el.textContent=m+':'+(sec<10?'0':'')+sec;if(s<60)el.style.color='#ef4444';},1000);
+const inp=document.querySelector('.otp-input');if(inp)inp.addEventListener('input',function(){this.value=this.value.replace(/[^0-9]/g,'').slice(0,6);});
+</script>
+</body></html>

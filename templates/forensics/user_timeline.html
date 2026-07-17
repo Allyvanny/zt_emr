@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% block title %}Timeline — {{ user.username }}{% endblock %}{% block page_title %}Forensic Timeline{% endblock %}{% block page_sub %}{{ user.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('admin.user_list') }}" class="breadcrumb">← Users</a><h2>{{ user.full_name }}</h2><p class="page-sub"><code>{{ user.username }}</code> — <span class="badge badge-{{ user.role }}">{{ user.role|replace('_',' ')|title }}</span></p></div></div>
+<div class="timeline-grid">
+  <div>
+    <div class="card card-body" style="margin-bottom:1.25rem">
+      <p class="form-section-title">User Profile</p>
+      <div class="info-grid">
+        <div class="info-row"><span class="info-label">Full Name</span><span class="info-value">{{ user.full_name }}</span></div>
+        <div class="info-row"><span class="info-label">Username</span><span class="info-value"><code>{{ user.username }}</code></span></div>
+        <div class="info-row"><span class="info-label">Role</span><span class="info-value"><span class="badge badge-{{ user.role }}">{{ user.role|replace('_',' ')|title }}</span></span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value">{{ user.email }}</span></div>
+        <div class="info-row"><span class="info-label">Last Login</span><span class="info-value">{{ user.last_login|eat if user.last_login else 'Never' }}</span></div>
+        <div class="info-row"><span class="info-label">Last Location</span><span class="info-value">{{ user.last_location or '—' }}</span></div>
+        <div class="info-row"><span class="info-label">Last Device</span><span class="info-value">{{ user.last_device or '—' }}</span></div>
+        <div class="info-row"><span class="info-label">Status</span><span class="info-value">{% if user.is_locked %}<span class="badge badge-danger">Locked</span>{% else %}<span class="badge badge-success">Active</span>{% endif %}</span></div>
+        <div class="info-row"><span class="info-label">Failed Attempts</span><span class="info-value">{{ user.failed_attempts }}</span></div>
+      </div>
+    </div>
+    <div class="card card-body">
+      <p class="form-section-title">Risk Events</p>
+      {% for r in risk_events %}
+      <div class="timeline-event event-{{ r.risk_level }}">
+        <span class="event-time">{{ r.timestamp|eat('%d %b %H:%M') }}</span>
+        <span class="badge badge-risk-{{ r.risk_level }}">{{ r.risk_level }}</span>
+        <span style="font-size:12px">{{ r.trigger_reason }}</span>
+        <span class="text-muted">→ {{ r.action_taken }}</span>
+      </div>
+      {% else %}<p class="text-muted">No risk events.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="card card-body">
+    <p class="form-section-title">Activity Timeline (last 100)</p>
+    <div class="activity-timeline">
+      {% for l in activity %}
+      <div class="timeline-item">
+        <div class="tl-dot tl-dot-{{ l.status }}"></div>
+        <div class="tl-content">
+          <div class="tl-header"><code>{{ l.action }}</code><span class="tl-time">{{ l.timestamp|eat('%d %b %Y %H:%M:%S') }}</span></div>
+          <div class="tl-meta">{% if l.resource %}{{ l.resource }}{% if l.resource_id %} #{{ l.resource_id }}{% endif %} &nbsp;·&nbsp;{% endif %}IP: {{ l.ip_address or '—' }} &nbsp;·&nbsp; <span class="badge badge-status-{{ l.status }}">{{ l.status }}</span></div>
+          {% if l.details %}<div class="tl-details">{{ l.details }}</div>{% endif %}
+        </div>
+      </div>
+      {% else %}<p class="text-muted">No activity.</p>{% endfor %}
+    </div>
+  </div>
+</div>{% endblock %}

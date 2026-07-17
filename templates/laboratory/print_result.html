@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratory Report - {{ req.patient.full_name }}</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #f0f0f0;
+      line-height: 1.5;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 10mm auto;
+      background: #fff;
+      padding: 20mm 18mm;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #1a237e;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a237e;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .header h2 {
+      font-size: 14px;
+      font-weight: 400;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    .print-btn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: #1a237e;
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 100;
+    }
+
+    .print-btn:hover { background: #283593; }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a237e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 1.5px solid #cfd8dc;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 30px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 6px;
+      padding: 3px 0;
+    }
+
+    .info-label {
+      font-weight: 600;
+      min-width: 120px;
+      color: #444;
+    }
+
+    .info-value {
+      color: #1a1a1a;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 14px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-normal { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .badge-abnormal { background: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }
+    .badge-critical { background: #fce4ec; color: #c62828; border: 1px solid #ef9a9a; }
+
+    .result-box {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 14px;
+      margin-top: 8px;
+    }
+
+    .result-data {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 3px;
+      padding: 10px 12px;
+      margin: 8px 0;
+    }
+
+    .ref-range {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .comments {
+      font-size: 12px;
+      color: #555;
+      font-style: italic;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #ddd;
+    }
+
+    .pending-msg {
+      text-align: center;
+      color: #999;
+      font-style: italic;
+      padding: 20px 0;
+      font-size: 14px;
+    }
+
+    .verification {
+      margin-top: 14px;
+      padding-top: 8px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 12px;
+      color: #555;
+    }
+
+    .signatures {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 50px;
+      padding-top: 10px;
+    }
+
+    .sig-block {
+      width: 42%;
+      text-align: center;
+    }
+
+    .sig-line {
+      border-top: 1px solid #1a1a1a;
+      margin-top: 40px;
+      padding-top: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 10px;
+      color: #999;
+    }
+
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; padding: 15mm 16mm; box-shadow: none; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">Print</button>
+
+  <div class="page">
+    <div class="header">
+      <h1>Zero Trust EMR</h1>
+      <h2>Laboratory Report</h2>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Patient Information</div>
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-label">Name:</span>
+          <span class="info-value">{{ req.patient.full_name }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Patient ID:</span>
+          <span class="info-value">{{ req.patient.patient_id }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Date of Birth:</span>
+          <span class="info-value">{{ req.patient.date_of_birth|eat_date }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Gender:</span>
+          <span class="info-value">{{ req.patient.gender }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Test Information</div>
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-label">Request No:</span>
+          <span class="info-value">{{ req.request_no }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Test Type:</span>
+          <span class="info-value">{{ req.test_type }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Category:</span>
+          <span class="info-value">{{ req.test_category }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Specimen:</span>
+          <span class="info-value">{{ req.specimen_type }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Priority:</span>
+          <span class="info-value">{{ req.priority }}</span>
+        </div>
+        {% if req.clinical_notes %}
+        <div class="info-row" style="grid-column: 1 / -1;">
+          <span class="info-label">Clinical Notes:</span>
+          <span class="info-value">{{ req.clinical_notes }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="info-grid">
+        <div class="info-row">
+          <span class="info-label">Requested By:</span>
+          <span class="info-value">{{ req.requester.full_name }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Request Date:</span>
+          <span class="info-value">{{ req.created_at|eat }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Results</div>
+      {% if req.result %}
+        <div class="result-box">
+          <div>
+            Interpretation:
+            {% if req.result.interpretation == 'normal' %}
+              <span class="badge badge-normal">Normal</span>
+            {% elif req.result.interpretation == 'abnormal' %}
+              <span class="badge badge-abnormal">Abnormal</span>
+            {% elif req.result.interpretation == 'critical' %}
+              <span class="badge badge-critical">Critical</span>
+            {% else %}
+              <span class="badge">{{ req.result.interpretation }}</span>
+            {% endif %}
+          </div>
+
+          <div class="result-data">{{ req.result.result_data }}</div>
+
+          {% if req.result.reference_range %}
+          <div class="ref-range">Reference Range: {{ req.result.reference_range }}</div>
+          {% endif %}
+
+          {% if req.result.comments %}
+          <div class="comments">Comments: {{ req.result.comments }}</div>
+          {% endif %}
+        </div>
+
+        <div class="verification">
+          {% if req.result.verifier %}
+          <span>Verified By: <strong>{{ req.result.verifier.full_name }}</strong></span>
+          &nbsp;&mdash;&nbsp;
+          {% endif %}
+          <span>Reported At: {{ req.result.created_at|eat }}</span>
+        </div>
+
+        {% if req.completed_at %}
+        <div class="verification">
+          Completed At: {{ req.completed_at|eat }}
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="pending-msg">Results pending</div>
+      {% endif %}
+    </div>
+
+    <div class="signatures">
+      <div class="sig-block">
+        <div class="sig-line">Laboratory Signature</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line">Technician Signature</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Printed on {{ now|eat }} &mdash; Confidential Patient Information
+    </div>
+  </div>
+</body>
+</html>

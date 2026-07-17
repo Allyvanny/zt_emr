@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard{% endblock %}
+{% block page_title %}Doctor Dashboard{% endblock %}
+{% block page_sub %}Welcome Dr. {{ current_user.full_name }}{% endblock %}
+
+{% block content %}
+<!-- Risk Banner -->
+{% if my_risk %}
+<div class="risk-banner risk-{{ my_risk.level }}">
+  <div class="risk-banner-left">
+    <span class="risk-icon">{% if my_risk.level=='low' %}✅{% elif my_risk.level=='medium' %}⚠️{% else %}🚨{% endif %}</span>
+    <div><strong>Risk Level: {{ my_risk.level|upper }}</strong><p>Score: {{ (my_risk.score*100)|round|int }}% — {{ my_risk.reason }}</p></div>
+  </div>
+  {% if current_user.last_location %}<span style="font-size:12px">🌍 {{ current_user.last_location }} &nbsp;|&nbsp; 🖥 {{ current_user.last_device or '—' }}</span>{% endif %}
+</div>
+{% endif %}
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card c-indigoa">
+    <div class="stat-icon si-indigo">👥</div>
+    <div><div class="stat-label">My Patients</div><div class="stat-value">{{ total_patients }}</div></div>
+  </div>
+  <div class="stat-card c-ambera">
+    <div class="stat-icon si-amber">⏳</div>
+    <div><div class="stat-label">Pending Approvals</div><div class="stat-value">{{ pending_count }}</div></div>
+  </div>
+  <div class="stat-card c-cyana">
+    <div class="stat-icon si-cyan">📅</div>
+    <div><div class="stat-label">Total Appointments</div><div class="stat-value">{{ total_appts }}</div></div>
+  </div>
+  <div class="stat-card c-greena">
+    <div class="stat-icon si-green">💊</div>
+    <div><div class="stat-label">Pending RX</div><div class="stat-value">{{ pending_rx }}</div><div class="stat-sub">{{ pending_labs }} lab requests</div></div>
+  </div>
+</div>
+
+<!-- Recent Patients -->
+<div class="card">
+  <div class="card-header">
+    <h3>🩺 My Recent Patients</h3>
+    <a href="{{ url_for('patients.patient_list') }}" class="link-more">View all →</a>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Patient</th><th>Diagnosis</th><th>Visit Date</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for rec in recent_records %}
+        <tr>
+          <td>
+            <strong style="color:var(--tx-1)">{{ rec.patient.full_name if rec.patient else '—' }}</strong><br>
+            <span style="font-size:11px;color:var(--tx-3)">{{ rec.patient.patient_id if rec.patient else '' }}</span>
+          </td>
+          <td>
+            <span class="badge" style="background:var(--teal-light);color:var(--teal-2)">{{ rec.diagnosis or 'No diagnosis' }}</span>
+          </td>
+          <td style="font-size:12px">{{ rec.visit_date|eat_date }}</td>
+          <td style="white-space:nowrap">
+            <a href="{{ url_for('patients.view_patient', patient_id=rec.patient_id) }}" class="link-action">View</a>
+            &nbsp;
+            <a href="{{ url_for('patients.add_record', patient_id=rec.patient_id) }}" class="link-action">+ Record</a>
+            &nbsp;
+            <a href="{{ url_for('appointments.book_appointment') }}" class="link-action">📅 Book</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty-row">No patient records yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

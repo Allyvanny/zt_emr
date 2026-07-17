@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}Activity Logs{% endblock %}{% block page_title %}Activity Logs{% endblock %}{% block page_sub %}All user actions recorded by Zero Trust monitor{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Activity Logs</h2></div><a href="{{ url_for('forensics.export_csv') }}" class="btn btn-secondary">Export CSV</a></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>#</th><th>User</th><th>Action</th><th>Resource</th><th>IP</th><th>Status</th><th>Timestamp</th><th>Details</th></tr></thead>
+<tbody>{% for l in logs.items %}<tr>
+<td class="text-muted">{{ l.id }}</td>
+<td>{{ l.user.username if l.user else '—' }}</td>
+<td><code>{{ l.action }}</code></td>
+<td>{{ l.resource or '—' }}{% if l.resource_id %} <span class="text-muted">#{{ l.resource_id }}</span>{% endif %}</td>
+<td><code>{{ l.ip_address or '—' }}</code></td>
+<td><span class="badge badge-status-{{ l.status }}">{{ l.status }}</span></td>
+<td class="mono">{{ l.timestamp|eat('%d %b %Y %H:%M:%S') }}</td>
+<td class="log-details">{{ l.details or '—' }}</td>
+</tr>{% else %}<tr><td colspan="8" class="empty-row">No logs.</td></tr>{% endfor %}</tbody>
+</table></div>
+<div class="pagination">{% if logs.has_prev %}<a href="{{ url_for('admin.activity_logs',page=logs.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}<span>Page {{ logs.page }} of {{ logs.pages }}</span>{% if logs.has_next %}<a href="{{ url_for('admin.activity_logs',page=logs.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}</div></div>{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Register Patient{% endblock %}{% block page_title %}Register Patient{% endblock %}{% block page_sub %}New patient registration{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('patients.patient_list') }}" class="breadcrumb">← Patients</a><h2>Register New Patient</h2></div></div>
+<div class="form-card"><form method="POST" action="{{ url_for('patients.register_patient') }}">
+  <div class="form-section"><p class="form-section-title">👤 Personal Information</p>
+    <div class="form-row"><div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" name="full_name" required placeholder="Patient full name"></div>
+    <div class="form-group"><label>Gender</label><select name="gender"><option value="">— Select —</option><option>Male</option><option>Female</option><option>Other</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label>Date of Birth</label><input type="date" name="date_of_birth"></div>
+    <div class="form-group"><label>Blood Group</label><select name="blood_group"><option value="">— Select —</option>{% for bg in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}<option>{{ bg }}</option>{% endfor %}</select></div></div>
+  </div>
+  <div class="form-section"><p class="form-section-title">📞 Contact Information</p>
+    <div class="form-row"><div class="form-group"><label>Phone</label><input type="text" name="phone" placeholder="+255 7XX XXX XXX"></div>
+    <div class="form-group"><label>Emergency Contact</label><input type="text" name="emergency_contact" placeholder="+255 7XX XXX XXX"></div></div>
+    <div class="form-group"><label>Address</label><input type="text" name="address" placeholder="P.O. Box, Town"></div>
+  </div>
+  <div class="form-actions"><a href="{{ url_for('patients.patient_list') }}" class="btn btn-ghost">Cancel</a><button type="submit" class="btn btn-primary">✓ Register Patient</button></div>
+</form></div>
+{% endblock %}

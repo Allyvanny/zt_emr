@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block title %}Prescriptions{% endblock %}{% block page_title %}Prescriptions{% endblock %}{% block page_sub %}Manage and dispense prescriptions{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Prescriptions</h2></div>
+<div class="header-actions">
+  <a href="{{ url_for('pharmacy.prescription_list',status='pending') }}" class="btn {% if status=='pending' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Pending</a>
+  <a href="{{ url_for('pharmacy.prescription_list',status='dispensed') }}" class="btn {% if status=='dispensed' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Dispensed</a>
+  <a href="{{ url_for('pharmacy.prescription_list',status='cancelled') }}" class="btn {% if status=='cancelled' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Cancelled</a>
+</div></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>RX No</th><th>Patient</th><th>Prescribed By</th><th>Status</th><th>Created</th><th>Dispensed</th><th>Actions</th></tr></thead>
+<tbody>{% for rx in rxs.items %}<tr>
+<td><code>{{ rx.prescription_no }}</code></td><td><strong style="color:var(--tx-1)">{{ rx.patient.full_name if rx.patient else '—' }}</strong></td>
+<td>{{ rx.prescriber.full_name if rx.prescriber else '—' }}</td>
+<td><span class="badge badge-{{ rx.status }}">{{ rx.status }}</span></td>
+<td>{{ rx.created_at|eat }}</td>
+<td>{{ rx.dispensed_at|eat if rx.dispensed_at else '—' }}</td>
+<td><a href="{{ url_for('pharmacy.view_prescription',rx_id=rx.id) }}" class="link-action">View</a>
+{% if rx.status=='pending' %}&nbsp;<a href="{{ url_for('pharmacy.view_prescription',rx_id=rx.id) }}" class="btn btn-primary btn-xs">Dispense</a>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="7" class="empty-row">No {{ status }} prescriptions.</td></tr>{% endfor %}</tbody>
+</table></div>
+<div class="pagination">{% if rxs.has_prev %}<a href="{{ url_for('pharmacy.prescription_list',status=status,page=rxs.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}
+<span>Page {{ rxs.page }} of {{ rxs.pages }}</span>
+{% if rxs.has_next %}<a href="{{ url_for('pharmacy.prescription_list',status=status,page=rxs.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}</div></div>
+{% endblock %}

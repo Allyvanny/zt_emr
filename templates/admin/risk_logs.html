@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}Risk Logs{% endblock %}{% block page_title %}Risk Logs{% endblock %}{% block page_sub %}AI-generated risk assessments{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Risk Logs</h2></div></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>#</th><th>User</th><th>Risk Level</th><th>Score</th><th>Trigger Reason</th><th>Action Taken</th><th>Timestamp</th></tr></thead>
+<tbody>{% for l in logs.items %}<tr>
+<td class="text-muted">{{ l.id }}</td>
+<td>{% if l.user %}<a href="{{ url_for('forensics.user_timeline',uid=l.user_id) }}" class="link-action">{{ l.user.username }}</a>{% else %}—{% endif %}</td>
+<td><span class="badge badge-risk-{{ l.risk_level }}">{{ l.risk_level }}</span></td>
+<td><div class="score-bar"><div class="score-fill score-{{ l.risk_level }}" style="width:{{ (l.risk_score*100)|round|int }}%"></div></div>{{ (l.risk_score*100)|round|int }}%</td>
+<td style="max-width:200px;font-size:12px;color:var(--tx-3)">{{ l.trigger_reason or '—' }}</td>
+<td><code>{{ l.action_taken }}</code></td>
+<td class="mono">{{ l.timestamp|eat('%d %b %Y %H:%M:%S') }}</td>
+</tr>{% else %}<tr><td colspan="7" class="empty-row">No risk logs yet.</td></tr>{% endfor %}</tbody>
+</table></div>
+<div class="pagination">{% if logs.has_prev %}<a href="{{ url_for('admin.risk_logs',page=logs.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}<span>Page {{ logs.page }} of {{ logs.pages }}</span>{% if logs.has_next %}<a href="{{ url_for('admin.risk_logs',page=logs.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}</div></div>{% endblock %}

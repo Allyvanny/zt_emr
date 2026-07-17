@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Patient Appointment Requests{% endblock %}
+{% block page_title %}Patient Appointment Requests{% endblock %}
+{% block page_sub %}Requests submitted by patients through the portal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h2>Patient Appointment Requests</h2><p class="page-sub">{{ reqs|length }} total requests</p></div>
+  <a href="{{ url_for('patient_portal.staff_messages') }}" class="btn btn-secondary btn-sm">💬 Patient Messages</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>Request No</th><th>Patient</th><th>Reason</th><th>Preferred Date</th><th>Urgency</th><th>Status</th><th>Submitted</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+      {% for req in reqs %}
+      <tr>
+        <td><code>{{ req.request_no }}</code></td>
+        <td><strong style="color:var(--tx-1)">{{ req.patient_account.full_name if req.patient_account else '—' }}</strong></td>
+        <td style="max-width:180px;font-size:12px;color:var(--tx-2)">{{ req.reason[:60] }}{% if req.reason|length > 60 %}…{% endif %}</td>
+        <td style="font-size:12px">{{ req.preferred_date|eat if req.preferred_date else 'Flexible' }}</td>
+        <td><span class="badge badge-{{ req.urgency }}">{{ req.urgency }}</span></td>
+        <td><span class="badge badge-{{ req.status }}">{{ req.status }}</span></td>
+        <td style="font-size:11px">{{ req.created_at|eat_date }}</td>
+        <td>
+          {% if req.status == 'pending' %}
+          <div id="action-{{ req.id }}">
+            <button class="btn btn-success btn-xs" onclick="showReview({{ req.id }},'approve')">✓ Approve</button>
+            <button class="btn btn-danger btn-xs" onclick="showReview({{ req.id }},'reject')" style="margin-left:4px">✕ Reject</button>
+          </div>
+          <div id="review-{{ req.id }}" style="display:none;margin-top:6px">
+            <form method="POST" action="{{ url_for('patient_portal.review_appointment_request', req_id=req.id) }}">
+              <input type="hidden" name="action" id="action-val-{{ req.id }}">
+              <textarea name="response_notes" rows="2" placeholder="Response notes (optional)…"
+                style="width:100%;padding:6px 10px;background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--tx-1);font-family:'Inter',sans-serif;margin-bottom:6px;resize:none"></textarea>
+              <div style="display:flex;gap:4px">
+                <button type="submit" id="submit-btn-{{ req.id }}" class="btn btn-success btn-xs">Confirm</button>
+                <button type="button" class="btn btn-ghost btn-xs" onclick="hideReview({{ req.id }})">Cancel</button>
+              </div>
+            </form>
+          </div>
+          {% else %}
+          <span style="font-size:12px;color:var(--tx-3)">{{ req.reviewer.full_name if req.reviewer else '—' }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="empty-row">No appointment requests from patients yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function showReview(id, action){
+  document.getElementById('review-'+id).style.display='block';
+  document.getElementById('action-val-'+id).value=action;
+  const btn=document.getElementById('submit-btn-'+id);
+  btn.textContent=action==='approve'?'✓ Confirm Approve':'✕ Confirm Reject';
+  btn.className='btn btn-xs '+(action==='approve'?'btn-success':'btn-danger');
+}
+function hideReview(id){
+  document.getElementById('review-'+id).style.display='none';
+}
+</script>
+{% endblock %}

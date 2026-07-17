@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block title %}Audit Trail{% endblock %}{% block page_title %}Forensic Audit Trail{% endblock %}{% block page_sub %}Tamper-evident log of all system activities{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Digital Forensic Audit Trail</h2></div>
+<div class="header-actions"><a href="{{ url_for('forensics.export_csv') }}" class="btn btn-secondary btn-sm">Export CSV</a><a href="{{ url_for('forensics.export_json') }}" class="btn btn-secondary btn-sm">Export JSON</a></div></div>
+<div class="filter-bar"><form method="GET" action="{{ url_for('forensics.audit_trail') }}" class="filter-form">
+  <div class="filter-group"><label>User</label><select name="user_id"><option value="">All Users</option>{% for u in users %}<option value="{{ u.id }}" {{ 'selected' if user_id==u.id }}>{{ u.username }}</option>{% endfor %}</select></div>
+  <div class="filter-group"><label>Action</label><input type="text" name="action" value="{{ action_filter }}" placeholder="e.g. view_patient"></div>
+  <div class="filter-group"><label>From</label><input type="date" name="date_from" value="{{ date_from }}"></div>
+  <div class="filter-group"><label>To</label><input type="date" name="date_to" value="{{ date_to }}"></div>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  <a href="{{ url_for('forensics.audit_trail') }}" class="btn btn-ghost">Reset</a>
+</form></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1.25rem;border-bottom:1px solid var(--border-2)"><span style="font-size:13px;color:var(--tx-3)">🔍 Forensic Log — {{ logs|length }} entries</span><span class="text-muted">All timestamps UTC</span></div>
+<div class="table-wrap"><table class="data-table">
+<thead><tr><th>ID</th><th>User</th><th>Role</th><th>Action</th><th>Resource</th><th>IP</th><th>Status</th><th>Timestamp (UTC)</th></tr></thead>
+<tbody>{% for l in logs %}<tr>
+<td class="text-muted">#{{ l.id }}</td>
+<td>{{ l.user.username if l.user else '—' }}</td>
+<td>{% if l.user %}<span class="badge badge-{{ l.user.role }}">{{ l.user.role|replace('_',' ')|title }}</span>{% endif %}</td>
+<td><code>{{ l.action }}</code></td>
+<td>{{ l.resource or '—' }}{% if l.resource_id %} <span class="text-muted">#{{ l.resource_id }}</span>{% endif %}</td>
+<td><code>{{ l.ip_address or '—' }}</code></td>
+<td><span class="badge badge-status-{{ l.status }}">{{ l.status }}</span></td>
+<td class="mono">{{ l.timestamp|eat('%Y-%m-%d %H:%M:%S') }}</td>
+</tr>{% else %}<tr><td colspan="8" class="empty-row">No logs found.</td></tr>{% endfor %}</tbody>
+</table></div></div>{% endblock %}

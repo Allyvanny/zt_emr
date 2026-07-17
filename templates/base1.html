@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{% block title %}ZT EMR{% endblock %}</title>
+<script>
+  // Apply saved theme before first paint to avoid a light/dark flash
+  (function(){
+    var t = localStorage.getItem('zt-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<link rel="stylesheet" href="{{ url_for('static',filename='css/main.css') }}">
+</head>
+<body>
+{% if current_user.is_authenticated %}
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo-wrap">
+      <span class="brand-name">Zero Trust EMR</span>
+      <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
+    </div>
+    
+  </div>
+
+  <!-- MAIN -->
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Main</p>
+    <ul class="sidebar-nav">
+
+      {% if current_user.role in ['doctor','admin'] %}
+      <!-- Doctor gets special dashboard -->
+      <li>
+        <a href="{{ url_for('appointments.doctor_dashboard') }}"
+           {% if request.endpoint=='appointments.doctor_dashboard' %}class="active"{% endif %}>
+          <span class="nav-icon">🩺</span> Doctor Dashboard
+        </a>
+      </li>
+      {% endif %}
+
+      {% if current_user.role in ['admin','nurse','receptionist'] %}
+      <li>
+        <a href="{{ url_for('patients.dashboard') }}"
+           {% if request.endpoint=='patients.dashboard' %}class="active"{% endif %}>
+          <span class="nav-icon">⬡</span> Dashboard
+        </a>
+      </li>
+      {% endif %}
+
+      {% if current_user.role in ['admin','doctor','nurse','receptionist'] %}
+      <li>
+        <a href="{{ url_for('patients.patient_list') }}"
+           {% if request.endpoint in ['patients.patient_list','patients.view_patient','patients.register_patient','patients.add_record'] %}class="active"{% endif %}>
+          <span class="nav-icon">👥</span> Patients
+        </a>
+      </li>
+      {% endif %}
+
+      {% if current_user.role in ['admin','doctor','nurse','receptionist'] %}
+      <li>
+        <a href="{{ url_for('patients.register_patient') }}"
+           {% if request.endpoint=='patients.register_patient' %}class="active"{% endif %}>
+          <span class="nav-icon">➕</span> Register Patient
+        </a>
+      </li>
+      {% endif %}
+
+    </ul>
+  </div>
+
+  <!-- APPOINTMENTS -->
+  {% if current_user.role in ['admin','doctor','nurse','receptionist'] %}
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Appointments</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('appointments.appointment_list') }}"
+           {% if request.endpoint in ['appointments.appointment_list','appointments.view_appointment'] %}class="active"{% endif %}>
+          <span class="nav-icon">📅</span> All Appointments
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('appointments.book_appointment') }}"
+           {% if request.endpoint=='appointments.book_appointment' %}class="active"{% endif %}>
+          <span class="nav-icon">📝</span> Book Appointment
+        </a>
+      </li>
+      {% if current_user.role in ['doctor','admin'] %}
+      <li>
+        <a href="{{ url_for('appointments.appointment_list', status='pending') }}"
+           {% if request.endpoint=='appointments.appointment_list' and request.args.get('status')=='pending' %}class="active"{% endif %}>
+          <span class="nav-icon">⏳</span> Pending Approvals
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- PHARMACY -->
+  {% if current_user.role in ['pharmacist','admin'] %}
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Pharmacy</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('pharmacy.dashboard') }}"
+           {% if request.endpoint=='pharmacy.dashboard' %}class="active"{% endif %}>
+          <span class="nav-icon">💊</span> Pharmacy Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('pharmacy.prescription_list') }}"
+           {% if 'pharmacy.prescription' in (request.endpoint or '') %}class="active"{% endif %}>
+          <span class="nav-icon">📋</span> Prescriptions
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('pharmacy.drug_list') }}"
+           {% if 'pharmacy.drug' in (request.endpoint or '') or request.endpoint=='pharmacy.add_drug' %}class="active"{% endif %}>
+          <span class="nav-icon">🗃️</span> Drug Inventory
+        </a>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- LABORATORY -->
+  {% if current_user.role in ['lab_technician','admin'] %}
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Laboratory</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('laboratory.dashboard') }}"
+           {% if request.endpoint=='laboratory.dashboard' %}class="active"{% endif %}>
+          <span class="nav-icon">🔬</span> Lab Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('laboratory.request_list') }}"
+           {% if 'laboratory.request' in (request.endpoint or '') %}class="active"{% endif %}>
+          <span class="nav-icon">🧪</span> Lab Requests
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('laboratory.result_list') }}"
+           {% if request.endpoint=='laboratory.result_list' %}class="active"{% endif %}>
+          <span class="nav-icon">📊</span> Results
+        </a>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if current_user.role in ['doctor','nurse','admin'] %}
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Clinical</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('laboratory.new_request') }}"
+           {% if request.endpoint=='laboratory.new_request' %}class="active"{% endif %}>
+          <span class="nav-icon">🔬</span> Order Lab Test
+        </a>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- PATIENT PORTAL MESSAGES -->
+  {% if current_user.role in ['doctor','nurse','admin'] %}
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Patient Portal</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('patient_portal.staff_messages') }}"
+           {% if request.endpoint=='patient_portal.staff_messages' %}class="active"{% endif %}>
+          <span class="nav-icon">💬</span> Patient Messages
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('patient_portal.staff_appointment_requests') }}"
+           {% if request.endpoint=='patient_portal.staff_appointment_requests' %}class="active"{% endif %}>
+          <span class="nav-icon">📨</span> Portal Appointment Requests
+        </a>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- ADMIN -->
+  {% if current_user.role == 'admin' %}
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Administration</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('admin.user_list') }}"
+           {% if 'admin.user' in (request.endpoint or '') %}class="active"{% endif %}>
+          <span class="nav-icon">👤</span> Users
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.activity_logs') }}"
+           {% if request.endpoint=='admin.activity_logs' %}class="active"{% endif %}>
+          <span class="nav-icon">📄</span> Activity Logs
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.risk_logs') }}"
+           {% if request.endpoint=='admin.risk_logs' %}class="active"{% endif %}>
+          <span class="nav-icon">🤖</span> Risk Logs
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('admin.auth_logs') }}"
+           {% if request.endpoint=='admin.auth_logs' %}class="active"{% endif %}>
+          <span class="nav-icon">🔑</span> Auth Logs
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Forensics</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('forensics.audit_trail') }}"
+           {% if request.endpoint=='forensics.audit_trail' %}class="active"{% endif %}>
+          <span class="nav-icon">🔍</span> Audit Trail
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('forensics.export_csv') }}">
+          <span class="nav-icon">📥</span> Export CSV
+        </a>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- ACCOUNT -->
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Account</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('profile.view_profile') }}"
+           {% if request.endpoint=='profile.view_profile' %}class="active"{% endif %}>
+          <span class="nav-icon">👤</span> My Profile
+        </a>
+      </li>
+      {% if current_user.role == 'admin' %}
+      <li>
+        <a href="{{ url_for('profile.email_settings') }}"
+           {% if request.endpoint=='profile.email_settings' %}class="active"{% endif %}>
+          <span class="nav-icon">📧</span> Email Settings
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      {% if current_user.avatar %}
+      <img src="{{ url_for('uploaded_avatar', filename=current_user.avatar) }}"
+           style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--teal);flex-shrink:0" alt="">
+      {% else %}
+      <div class="user-avatar ua-{{ current_user.role }}">{{ current_user.full_name[0] }}</div>
+      {% endif %}
+      <div class="user-info">
+        <div class="user-name">{{ current_user.full_name }}</div>
+        <div class="user-role">{{ current_user.role|replace('_',' ')|title }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="sidebar-logout">⏻ Sign Out</a>
+  </div>
+</aside>
+
+<div class="layout">
+  <div class="topbar">
+    <button class="hamburger" id="sidebar-toggle" aria-label="Open menu">☰</button>
+    <div style="min-width:0">
+      <div class="topbar-title">{% block page_title %}Zero Trust EMR{% endblock %}</div>
+      <div class="topbar-sub">{% block page_sub %}Electronic Medical Records System{% endblock %}</div>
+    </div>
+    <div class="topbar-right">
+      {% if current_user.last_location %}
+      <span class="topbar-location">🌍 {{ current_user.last_location }}</span>
+      {% endif %}
+      <span class="badge badge-{{ current_user.role }}">{{ current_user.role|replace('_',' ')|title }}</span>
+      <span class="topbar-clock" id="live-clock"></span>
+      <div class="theme-toggle" id="theme-toggle" role="button" aria-label="Toggle dark mode" title="Toggle dark / light mode">
+        <span class="knob" id="theme-knob">☀️</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-body">
+    {% with messages=get_flashed_messages(with_categories=true) %}
+      {% for cat,msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+
+  <footer class="footer">
+    Zero Trust EMR
+  </footer>
+</div>
+
+{% else %}
+{% with messages=get_flashed_messages(with_categories=true) %}
+  {% for cat,msg in messages %}
+    <div class="alert alert-{{ cat }}" style="margin:1rem">{{ msg }}</div>
+  {% endfor %}
+{% endwith %}
+{% endif %}
+
+<script src="{{ url_for('static',filename='js/main.js') }}"></script>
+<script src="{{ url_for('static',filename='js/theme.js') }}"></script>
+<script src="{{ url_for('static',filename='js/sidebar.js') }}"></script>
+<script src="{{ url_for('static',filename='js/location.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

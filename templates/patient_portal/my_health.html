@@ -1,0 +1,150 @@
+{% extends "patient_portal/base.html" %}
+{% block title %}{{ t('health_records_title') }}{% endblock %}
+{% block page_title %}{{ t('health_records_title') }}{% endblock %}
+{% block page_sub %}{{ t('health_records_sub') }}{% endblock %}
+{% block content %}
+
+{% if not_linked %}
+<div style="text-align:center;padding:3rem;background:#fff;border-radius:16px;border:1px solid rgba(0,212,212,.12);margin-bottom:1.5rem">
+  <div style="font-size:3rem;margin-bottom:12px">🔗</div>
+  <h3 style="font-size:1.1rem;font-weight:700;color:#1a2332;margin-bottom:8px">{{ t('not_linked_title') }}</h3>
+  <p style="font-size:13px;color:#7a95a8;max-width:400px;margin:0 auto 1.25rem">{{ t('not_linked_body') }} <strong style="color:#1a2332">{{ current_user.full_name }}</strong></p>
+  <a href="{{ url_for('patient_portal.send_message') }}" class="btn btn-primary">{{ t('message_hospital') }}</a>
+</div>
+{% else %}
+
+<!-- Tabs -->
+<div style="display:flex;gap:4px;margin-bottom:1.25rem;background:#fff;padding:6px;border-radius:12px;border:1px solid rgba(0,212,212,.12);width:fit-content">
+  {% for tid,lbl,icon in [('records',t('tab_records'),'🩺'),('prescriptions',t('tab_prescriptions'),'💊'),('lab',t('tab_lab'),'🔬')] %}
+  <button onclick="showTab('{{ tid }}')" id="tab-{{ tid }}"
+    style="padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;{% if loop.first %}background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff{% else %}background:transparent;color:#7a95a8{% endif %}">
+    {{ icon }} {{ lbl }}
+  </button>
+  {% endfor %}
+</div>
+
+<!-- Medical Records -->
+<div id="pane-records">
+  {% if records %}
+  {% for rec in records %}
+  <div class="rec-card">
+    <div class="rec-header">
+      <div>
+        <strong style="color:#1a2332;font-size:13px">{{ rec.visit_date|eat('%d %B %Y') }}</strong>
+        {% if rec.doctor %}<span style="font-size:12px;color:#7a95a8;margin-left:8px">{{ t('by_doctor') }} {{ rec.doctor.full_name }}</span>{% endif %}
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        {% if rec.is_confidential %}<span class="badge badge-rejected" style="font-size:10px">{{ t('confidential_badge') }}</span>{% endif %}
+        <span class="badge" style="background:rgba(0,212,212,.1);color:#007a7a;border:none">{{ rec.diagnosis or t('no_diagnosis') }}</span>
+      </div>
+    </div>
+    <div class="rec-body">
+      {% for lbl,val in [(t('lbl_symptoms'),rec.symptoms),(t('lbl_diagnosis'),rec.diagnosis),(t('lbl_treatment'),rec.treatment),(t('lbl_prescription'),rec.prescription),(t('lbl_notes'),rec.notes)] %}
+      {% if val and not rec.is_confidential %}
+      <div class="rec-field">
+        <span class="rec-label">{{ lbl }}</span>
+        <span style="color:#3d5166;font-size:13px">{{ val }}</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+      {% if rec.is_confidential %}
+      <div style="text-align:center;padding:1rem;color:#b0c4ce;font-size:13px">{{ t('confidential_notice') }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:3rem;background:#fff;border-radius:14px;border:1px solid rgba(0,212,212,.1);color:#b0c4ce">
+    <div style="font-size:2.5rem;margin-bottom:8px">🩺</div>
+    <p>{{ t('no_records_yet') }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Prescriptions -->
+<div id="pane-prescriptions" style="display:none">
+  {% if prescriptions %}
+  <div class="card">
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>{{ t('th_rx_number') }}</th><th>{{ t('th_prescribed_by') }}</th><th>{{ t('th_status') }}</th><th>{{ t('th_details') }}</th><th>{{ t('th_date') }}</th></tr></thead>
+        <tbody>
+        {% for rx in prescriptions %}
+        <tr>
+          <td><code>{{ rx.prescription_no }}</code></td>
+          <td style="font-size:12px">{{ rx.prescriber.full_name if rx.prescriber else '—' }}</td>
+          <td><span class="badge badge-{{ rx.status }}">{{ rx.status }}</span></td>
+          <td style="font-size:12px;color:#7a95a8;max-width:200px">
+            {% if rx.items %}
+              {% for item in rx.items[:2] %}{{ item.drug.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+              {% if rx.items|length > 2 %} +{{ rx.items|length - 2 }} {{ t('more_suffix') }}{% endif %}
+            {% else %}{{ rx.notes[:60] if rx.notes else '—' }}{% endif %}
+          </td>
+          <td style="font-size:12px">{{ rx.created_at|eat_date }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:3rem;background:#fff;border-radius:14px;border:1px solid rgba(0,212,212,.1);color:#b0c4ce">
+    <div style="font-size:2.5rem;margin-bottom:8px">💊</div><p>{{ t('no_prescriptions') }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Lab Results -->
+<div id="pane-lab" style="display:none">
+  {% if lab_results %}
+  {% for req in lab_results %}
+  <div class="rec-card">
+    <div class="rec-header">
+      <div>
+        <strong style="color:#1a2332;font-size:13px">{{ req.test_type }}</strong>
+        <span style="font-size:11px;color:#7a95a8;margin-left:8px">{{ req.test_category }}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <span class="badge badge-{{ req.status }}">{{ req.status }}</span>
+        <span class="badge badge-{{ req.priority }}">{{ req.priority }}</span>
+        {% if req.result %}
+        <span class="badge badge-{{ 'approved' if req.result.interpretation=='normal' else ('pending' if req.result.interpretation=='abnormal' else 'rejected') }}">
+          {{ req.result.interpretation|upper if req.result else '' }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% if req.result %}
+    <div class="rec-body">
+      <div class="rec-field"><span class="rec-label">{{ t('lbl_result') }}</span><span style="font-family:monospace;font-size:12px;color:#3d5166">{{ req.result.result_data }}</span></div>
+      {% if req.result.reference_range %}<div class="rec-field"><span class="rec-label">{{ t('lbl_reference') }}</span><span style="font-size:12px;color:#7a95a8">{{ req.result.reference_range }}</span></div>{% endif %}
+      {% if req.result.comments %}<div class="rec-field"><span class="rec-label">{{ t('lbl_comments') }}</span><span style="font-size:12px;color:#3d5166">{{ req.result.comments }}</span></div>{% endif %}
+      <div class="rec-field"><span class="rec-label">{{ t('lbl_reported') }}</span><span style="font-size:12px;color:#7a95a8">{{ req.result.created_at|eat }}</span></div>
+    </div>
+    {% else %}
+    <div style="padding:.75rem 1rem;font-size:12px;color:#b0c4ce">{{ t('results_pending') }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  {% else %}
+  <div style="text-align:center;padding:3rem;background:#fff;border-radius:14px;border:1px solid rgba(0,212,212,.1);color:#b0c4ce">
+    <div style="font-size:2.5rem;margin-bottom:8px">🔬</div><p>{{ t('no_lab_results') }}</p>
+  </div>
+  {% endif %}
+</div>
+
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+const TABS=['records','prescriptions','lab'];
+function showTab(id){
+  TABS.forEach(t=>{
+    document.getElementById('pane-'+t).style.display=t===id?'block':'none';
+    const btn=document.getElementById('tab-'+t);
+    btn.style.background=t===id?'linear-gradient(135deg,#00d4d4,#7c5cbf)':'transparent';
+    btn.style.color=t===id?'#fff':'#7a95a8';
+  });
+}
+</script>
+{% endblock %}

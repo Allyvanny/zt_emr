@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Appointment {{ appt.appointment_no }}{% endblock %}
+{% block page_title %}Appointment Details{% endblock %}
+{% block page_sub %}{{ appt.appointment_no }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="{{ url_for('appointments.appointment_list') }}" class="breadcrumb">← Appointments</a>
+    <h2>{{ appt.appointment_no }}</h2>
+  </div>
+  <div class="header-actions">
+    {% if appt.status == 'pending' and current_user.role in ['doctor','admin'] %}
+    <form method="POST" action="{{ url_for('appointments.approve_appointment', appt_id=appt.id) }}" style="display:inline">
+      <button type="submit" class="btn btn-success">✓ Approve</button>
+    </form>
+    {% endif %}
+    {% if appt.status == 'approved' and current_user.role in ['doctor','admin'] %}
+    <form method="POST" action="{{ url_for('appointments.complete_appointment', appt_id=appt.id) }}" style="display:inline">
+      <button type="submit" class="btn btn-info">✓ Mark Completed</button>
+    </form>
+    {% endif %}
+    {% if appt.status not in ['completed','cancelled'] %}
+    <form method="POST" action="{{ url_for('appointments.cancel_appointment', appt_id=appt.id) }}" style="display:inline">
+      <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card card-body">
+    <p class="form-section-title">Appointment Information</p>
+    <div class="info-grid">
+      <div class="info-row"><span class="info-label">Appt No</span><span class="info-value"><code>{{ appt.appointment_no }}</code></span></div>
+      <div class="info-row"><span class="info-label">Status</span><span class="info-value"><span class="badge badge-{{ appt.status }}">{{ appt.status }}</span></span></div>
+      <div class="info-row"><span class="info-label">Date & Time</span><span class="info-value"><strong>{{ appt.appointment_date|eat('%d %b %Y, %H:%M') }}</strong></span></div>
+      <div class="info-row"><span class="info-label">Doctor</span><span class="info-value">{{ appt.doctor.full_name if appt.doctor else '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Reason</span><span class="info-value">{{ appt.reason or '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Notes</span><span class="info-value">{{ appt.notes or '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Booked By</span><span class="info-value">{{ appt.requester.full_name if appt.requester else '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Booked At</span><span class="info-value">{{ appt.created_at|eat }}</span></div>
+      {% if appt.approved_at %}<div class="info-row"><span class="info-label">Approved At</span><span class="info-value">{{ appt.approved_at|eat }}</span></div>{% endif %}
+    </div>
+  </div>
+
+  <div class="card card-body">
+    <p class="form-section-title">Patient Information</p>
+    {% if appt.patient %}
+    <div class="info-grid">
+      <div class="info-row"><span class="info-label">Patient ID</span><span class="info-value"><code>{{ appt.patient.patient_id }}</code></span></div>
+      <div class="info-row"><span class="info-label">Full Name</span><span class="info-value"><strong style="color:var(--tx-1)">{{ appt.patient.full_name }}</strong></span></div>
+      <div class="info-row"><span class="info-label">Gender</span><span class="info-value">{{ appt.patient.gender }}</span></div>
+      <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-value">{{ appt.patient.date_of_birth|eat_date if appt.patient.date_of_birth else '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Phone</span><span class="info-value">{{ appt.patient.phone or '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Blood Group</span><span class="info-value"><span class="blood-badge">{{ appt.patient.blood_group or '—' }}</span></span></div>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap">
+      <a href="{{ url_for('patients.view_patient', patient_id=appt.patient.id) }}" class="btn btn-secondary btn-sm">View Full Record</a>
+      <a href="{{ url_for('patients.add_record', patient_id=appt.patient.id) }}" class="btn btn-primary btn-sm">+ Add Medical Record</a>
+    </div>
+    {% else %}
+    <p class="text-muted">Patient not found.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

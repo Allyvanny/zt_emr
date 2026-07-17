@@ -1,0 +1,27 @@
+ADD THIS BLOCK to templates/base.html (the STAFF base template)
+Place it inside the "Clinical" sidebar-section, or create a new section right after Appointments:
+
+  <!-- PATIENT PORTAL MESSAGES (for doctor/nurse/admin) -->
+  {% if current_user.role in ['doctor','nurse','admin'] %}
+  <div class="sidebar-section">
+    <p class="sidebar-section-label">Patient Portal</p>
+    <ul class="sidebar-nav">
+      <li>
+        <a href="{{ url_for('patient_portal.staff_messages') }}"
+           {% if request.endpoint=='patient_portal.staff_messages' %}class="active"{% endif %}>
+          <span class="nav-icon">💬</span> Patient Messages
+        </a>
+      </li>
+      <li>
+        <a href="{{ url_for('patient_portal.staff_appointment_requests') }}"
+           {% if request.endpoint=='patient_portal.staff_appointment_requests' %}class="active"{% endif %}>
+          <span class="nav-icon">📨</span> Portal Appointment Requests
+        </a>
+      </li>
+    </ul>
+  </div>
+  {% endif %}
+
+Also add this to the BOTTOM of the login page (templates/auth/login.html),
+right after the demo credentials table, so staff can find the patient portal link:
+	

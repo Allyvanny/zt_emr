@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Drug Inventory{% endblock %}{% block page_title %}Drug Inventory{% endblock %}{% block page_sub %}Manage pharmaceutical stock{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Drug Inventory</h2><p class="page-sub">{{ drugs.total }} drugs registered</p></div><a href="{{ url_for('pharmacy.add_drug') }}" class="btn btn-primary">+ Add Drug</a></div>
+<div class="search-bar"><form method="GET" action="{{ url_for('pharmacy.drug_list') }}"><input type="text" name="search" value="{{ search }}" placeholder="Search by name or generic name…"><button type="submit" class="btn btn-secondary">Search</button>{% if search %}<a href="{{ url_for('pharmacy.drug_list') }}" class="btn btn-ghost">Clear</a>{% endif %}</form></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>Drug Name</th><th>Generic Name</th><th>Category</th><th>Unit</th><th>Stock</th><th>Reorder Level</th><th>Unit Price</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody>{% for d in drugs.items %}<tr>
+<td><strong style="color:var(--tx-1)">{{ d.name }}</strong></td><td>{{ d.generic_name or '—' }}</td><td>{{ d.category or '—' }}</td><td>{{ d.unit }}</td>
+<td><div class="stock-indicator"><div class="stock-bar"><div class="stock-fill {{ 'stock-out' if d.is_out_of_stock else ('stock-low' if d.is_low_stock else 'stock-ok') }}" style="width:{{ [((d.stock_qty/(d.reorder_level*2))*100)|round|int,100]|min }}%"></div></div>{{ d.stock_qty }}</div></td>
+<td>{{ d.reorder_level }}</td><td>TZS {{ '%.0f'|format(d.unit_price) }}</td>
+<td>{% if d.is_out_of_stock %}<span class="badge badge-danger">Out of Stock</span>{% elif d.is_low_stock %}<span class="badge badge-warning">Low Stock</span>{% else %}<span class="badge badge-success">In Stock</span>{% endif %}</td>
+<td><form method="POST" action="{{ url_for('pharmacy.restock_drug',did=d.id) }}" style="display:inline;gap:4px;display:flex">
+<input type="number" name="qty" min="1" value="100" style="width:70px;padding:4px 8px;background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;color:var(--tx-1);font-size:12px">
+<button type="submit" class="btn btn-info btn-xs">Restock</button></form></td>
+</tr>{% else %}<tr><td colspan="9" class="empty-row">No drugs found.</td></tr>{% endfor %}</tbody>
+</table></div>
+<div class="pagination">{% if drugs.has_prev %}<a href="{{ url_for('pharmacy.drug_list',page=drugs.prev_num,search=search) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}<span>Page {{ drugs.page }} of {{ drugs.pages }}</span>{% if drugs.has_next %}<a href="{{ url_for('pharmacy.drug_list',page=drugs.next_num,search=search) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}</div></div>
+{% endblock %}

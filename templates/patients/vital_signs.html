@@ -1,0 +1,84 @@
+{% extends "base.html" %}{% block title %}Record Vitals{% endblock %}{% block page_title %}Vital Signs{% endblock %}{% block page_sub %}{{ patient.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('patients.view_patient',patient_id=patient.id) }}" class="breadcrumb">← {{ patient.full_name }}</a><h2>Record Vital Signs</h2></div></div>
+<div class="form-card"><form method="POST" action="{{ url_for('patients.vital_signs',patient_id=patient.id) }}">
+  <div class="form-section"><p class="form-section-title">❤️ Vital Signs</p>
+    <div class="form-row">
+      <div class="form-group"><label>Temperature (°C)</label>
+        <input type="number" name="temperature" step="0.1" min="30" max="45" placeholder="e.g. 36.8">
+        <small style="color:var(--muted);font-size:.75rem">Normal: 36.1–37.2°C</small></div>
+      <div class="form-group"><label>Pulse Rate (bpm)</label>
+        <input type="number" name="pulse_rate" min="30" max="250" placeholder="e.g. 72">
+        <small style="color:var(--muted);font-size:.75rem">Normal: 60–100 bpm</small></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Blood Pressure Systolic (mmHg)</label>
+        <input type="number" name="bp_systolic" min="60" max="300" placeholder="e.g. 120">
+        <small style="color:var(--muted);font-size:.75rem">Normal: 90–120 mmHg</small></div>
+      <div class="form-group"><label>Blood Pressure Diastolic (mmHg)</label>
+        <input type="number" name="bp_diastolic" min="30" max="200" placeholder="e.g. 80">
+        <small style="color:var(--muted);font-size:.75rem">Normal: 60–80 mmHg</small></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Respiratory Rate (/min)</label>
+        <input type="number" name="respiratory_rate" min="5" max="60" placeholder="e.g. 16">
+        <small style="color:var(--muted);font-size:.75rem">Normal: 12–20 breaths/min</small></div>
+      <div class="form-group"><label>SpO₂ (%)</label>
+        <input type="number" name="spo2" min="50" max="100" placeholder="e.g. 98">
+        <small style="color:var(--muted);font-size:.75rem">Normal: 95–100%</small></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Weight (kg)</label>
+        <input type="number" name="weight" id="weight" step="0.1" min="0" max="500" placeholder="e.g. 70.5"></div>
+      <div class="form-group"><label>Height (cm)</label>
+        <input type="number" name="height" id="height" step="0.1" min="0" max="300" placeholder="e.g. 175.0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>BMI (kg/m²)</label>
+        <input type="text" id="bmi" readonly placeholder="Auto-calculated">
+        <small style="color:var(--muted);font-size:.75rem">Normal: 18.5–24.9</small></div>
+      <div class="form-group"></div>
+    </div>
+  </div>
+  <div class="form-section"><p class="form-section-title">📝 Notes</p>
+    <div class="form-group"><label>Clinical Notes</label><textarea name="notes" rows="3" placeholder="Observations, symptoms, or additional context…"></textarea></div>
+  </div>
+  {% if prev %}
+  <div class="form-section"><p class="form-section-title">📋 Previous Reading</p>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="text-align:left;padding:.4rem .6rem;color:var(--muted)">Parameter</th>
+          <th style="text-align:left;padding:.4rem .6rem;color:var(--muted)">Value</th>
+        </tr></thead>
+        <tbody>
+          {% if prev.temperature %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">Temperature</td><td style="padding:.4rem .6rem">{{ prev.temperature }}°C</td></tr>{% endif %}
+          {% if prev.bp_systolic or prev.bp_diastolic %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">Blood Pressure</td><td style="padding:.4rem .6rem">{{ prev.bp_systolic or '—' }}/{{ prev.bp_diastolic or '—' }} mmHg</td></tr>{% endif %}
+          {% if prev.pulse_rate %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">Pulse Rate</td><td style="padding:.4rem .6rem">{{ prev.pulse_rate }} bpm</td></tr>{% endif %}
+          {% if prev.respiratory_rate %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">Respiratory Rate</td><td style="padding:.4rem .6rem">{{ prev.respiratory_rate }}/min</td></tr>{% endif %}
+          {% if prev.spo2 %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">SpO₂</td><td style="padding:.4rem .6rem">{{ prev.spo2 }}%</td></tr>{% endif %}
+          {% if prev.weight %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">Weight</td><td style="padding:.4rem .6rem">{{ prev.weight }} kg</td></tr>{% endif %}
+          {% if prev.height %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">Height</td><td style="padding:.4rem .6rem">{{ prev.height }} cm</td></tr>{% endif %}
+          {% if prev.bmi %}<tr style="border-bottom:1px solid var(--border)"><td style="padding:.4rem .6rem">BMI</td><td style="padding:.4rem .6rem">{{ prev.bmi }}</td></tr>{% endif %}
+          {% if prev.notes %}<tr><td style="padding:.4rem .6rem">Notes</td><td style="padding:.4rem .6rem">{{ prev.notes }}</td></tr>{% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+  <div class="form-actions"><a href="{{ url_for('patients.view_patient',patient_id=patient.id) }}" class="btn btn-ghost">Cancel</a><button type="submit" class="btn btn-primary">✓ Save Vitals</button></div>
+</form></div>
+<script>
+(function(){
+  var w=document.getElementById('weight'),h=document.getElementById('height'),b=document.getElementById('bmi');
+  function calc(){
+    var wt=parseFloat(w.value),ht=parseFloat(h.value);
+    if(wt>0&&ht>0){b.value=(wt/((ht/100)*(ht/100))).toFixed(1);}
+    else{b.value='';}
+  }
+  w.addEventListener('input',calc);
+  h.addEventListener('input',calc);
+  calc();
+})();
+</script>
+{% endblock %}

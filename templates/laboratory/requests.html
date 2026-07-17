@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block title %}Lab Requests{% endblock %}{% block page_title %}Lab Requests{% endblock %}{% block page_sub %}All laboratory test requests{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Lab Requests</h2></div>
+<div class="header-actions">
+  <a href="{{ url_for('laboratory.request_list',status='pending') }}" class="btn {% if status=='pending' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Pending</a>
+  <a href="{{ url_for('laboratory.request_list',status='in_progress') }}" class="btn {% if status=='in_progress' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">In Progress</a>
+  <a href="{{ url_for('laboratory.request_list',status='completed') }}" class="btn {% if status=='completed' %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">Completed</a>
+</div></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>Request No</th><th>Patient</th><th>Test Type</th><th>Category</th><th>Priority</th><th>Specimen</th><th>Status</th><th>Requested By</th><th>Date</th><th>Actions</th></tr></thead>
+<tbody>{% for r in requests.items %}<tr>
+<td><code>{{ r.request_no }}</code></td>
+<td><strong style="color:var(--tx-1)">{{ r.patient.full_name if r.patient else '—' }}</strong></td>
+<td>{{ r.test_type }}</td><td><span style="font-size:11px;color:var(--tx-3)">{{ r.test_category }}</span></td>
+<td><span class="badge badge-{{ r.priority }}">{{ r.priority }}</span></td>
+<td>{{ r.specimen_type or '—' }}</td>
+<td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+<td style="font-size:12px">{{ r.requester.full_name if r.requester else '—' }}</td>
+<td style="font-size:11px">{{ r.created_at|eat }}</td>
+<td style="white-space:nowrap">
+  <a href="{{ url_for('laboratory.view_request',rid=r.id) }}" class="link-action">View</a>
+  {% if r.status=='pending' %}&nbsp;<a href="{{ url_for('laboratory.enter_result',rid=r.id) }}" class="btn btn-primary btn-xs">Result</a>{% endif %}
+  {% if r.status=='in_progress' %}&nbsp;<a href="{{ url_for('laboratory.enter_result',rid=r.id) }}" class="btn btn-success btn-xs">Complete</a>{% endif %}
+</td>
+</tr>{% else %}<tr><td colspan="10" class="empty-row">No {{ status }} requests.</td></tr>{% endfor %}</tbody>
+</table></div>
+<div class="pagination">
+{% if requests.has_prev %}<a href="{{ url_for('laboratory.request_list',status=status,page=requests.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}
+<span>Page {{ requests.page }} of {{ requests.pages }}</span>
+{% if requests.has_next %}<a href="{{ url_for('laboratory.request_list',status=status,page=requests.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}
+</div></div>{% endblock %}

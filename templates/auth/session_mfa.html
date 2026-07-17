@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Security Challenge</title><link rel="stylesheet" href="{{ url_for('static',filename='css/main.css') }}"></head>
+<body class="auth-body">
+<div class="auth-container"><div class="auth-card">
+  <div class="otp-header"><div class="otp-icon">🚨</div>
+    <h2 style="font-size:1.25rem;font-weight:800;color:var(--tx-1)">Security Challenge</h2>
+    <p style="color:var(--tx-3);font-size:13px;margin-top:4px">AI detected elevated risk during your session.</p>
+  </div>
+  {% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}{% endwith %}
+  <div style="background:var(--danger-bg);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:12px 16px;margin-bottom:1.25rem">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><strong style="font-size:13px;color:#fca5a5">⚠️ Risk Score: {{ (risk_score*100)|round|int }}%</strong></div>
+    <p style="font-size:12px;color:#fca5a5;margin:0">{{ risk_reason }}</p>
+  </div>
+  <div class="otp-info-box"><strong>🔐 Verification code sent to:</strong><br><span style="font-family:'JetBrains Mono',monospace;font-size:14px">{{ masked_email }}</span></div>
+  <form method="POST" action="{{ url_for('auth.session_mfa') }}">
+    <div class="otp-input-wrap"><input type="text" name="otp" class="otp-input" maxlength="6" placeholder="——————" required autofocus autocomplete="off" inputmode="numeric"></div>
+    <div class="otp-timer">Expires in <strong id="countdown">5:00</strong></div>
+    <button type="submit" class="btn btn-primary btn-full">✓ Verify &amp; Continue</button>
+  </form>
+  <div style="text-align:center;margin-top:1rem">
+    <form method="POST" action="{{ url_for('auth.resend_otp') }}" style="display:inline"><button type="submit" class="otp-resend-btn">↻ Resend</button></form>
+    &nbsp;·&nbsp;<a href="{{ url_for('auth.logout') }}" style="font-size:13px;color:var(--tx-3)">Sign out</a>
+  </div>
+</div></div>
+<script>let s=300;const el=document.getElementById('countdown');const t=setInterval(()=>{s--;if(s<=0){clearInterval(t);el.textContent='Expired';el.style.color='#ef4444';return;}el.textContent=Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;if(s<60)el.style.color='#ef4444';},1000);const inp=document.querySelector('.otp-input');if(inp)inp.addEventListener('input',function(){this.value=this.value.replace(/[^0-9]/g,'').slice(0,6);});</script>
+</body></html>

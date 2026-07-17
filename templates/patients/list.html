@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Patients{% endblock %}
+{% block page_title %}Patient Registry{% endblock %}
+{% block page_sub %}{{ patients.total }} patients registered{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h2>Patient Registry</h2><p class="page-sub">{{ patients.total }} patients — Page {{ patients.page }} of {{ patients.pages }}</p></div>
+  {% if current_user.role in ['admin','receptionist'] %}<a href="{{ url_for('patients.register_patient') }}" class="btn btn-primary">+ Register Patient</a>{% endif %}
+</div>
+<div class="search-bar"><form method="GET" action="{{ url_for('patients.patient_list') }}">
+  <input type="text" name="search" value="{{ search }}" placeholder="Search by name or patient ID…">
+  <button type="submit" class="btn btn-secondary">Search</button>
+  {% if search %}<a href="{{ url_for('patients.patient_list') }}" class="btn btn-ghost">Clear</a>{% endif %}
+</form></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+  <thead><tr><th>Patient ID</th><th>Full Name</th><th>Gender</th><th>DOB</th><th>Blood</th><th>Phone</th><th>Registered</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for p in patients.items %}
+  <tr><td><code>{{ p.patient_id }}</code></td><td><strong style="color:var(--tx-1)">{{ p.full_name }}</strong></td><td>{{ p.gender }}</td><td>{{ p.date_of_birth|eat_date if p.date_of_birth else '—' }}</td><td><span class="blood-badge">{{ p.blood_group or '—' }}</span></td><td>{{ p.phone or '—' }}</td><td>{{ p.registered_at|eat_date }}</td>
+  <td style="white-space:nowrap"><a href="{{ url_for('patients.view_patient',patient_id=p.id) }}" class="link-action">View</a>
+  {% if current_user.role in ['admin','doctor','nurse'] %}&nbsp;<a href="{{ url_for('patients.add_record',patient_id=p.id) }}" class="link-action">+ Record</a>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="8" class="empty-row">No patients found.</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+<div class="pagination">
+  {% if patients.has_prev %}<a href="{{ url_for('patients.patient_list',page=patients.prev_num,search=search) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}
+  {% for pn in patients.iter_pages(left_edge=1,right_edge=1,left_current=2,right_current=2) %}{% if pn %}{% if pn==patients.page %}<span class="btn btn-primary btn-sm">{{ pn }}</span>{% else %}<a href="{{ url_for('patients.patient_list',page=pn,search=search) }}" class="btn btn-ghost btn-sm">{{ pn }}</a>{% endif %}{% else %}<span style="color:var(--tx-4)">…</span>{% endif %}{% endfor %}
+  {% if patients.has_next %}<a href="{{ url_for('patients.patient_list',page=patients.next_num,search=search) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}
+</div></div>
+{% endblock %}

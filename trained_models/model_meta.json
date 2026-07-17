@@ -1,0 +1,22 @@
+{
+  "trained_at": "2026-05-30T18:27:35.356040",
+  "algorithm": "IsolationForest",
+  "n_estimators": 200,
+  "contamination": 0.08,
+  "n_features": 6,
+  "feature_names": [
+    "records_accessed",
+    "failed_logins",
+    "off_hours_flag",
+    "distinct_ips",
+    "actions_per_minute",
+    "after_midnight"
+  ],
+  "training_samples": 3,
+  "test_samples": 3,
+  "avg_risk_train": 0.8875,
+  "avg_risk_test": 0.8875,
+  "database": "mysql",
+  "author": "Alto Dezdel Kiyamba",
+  "institution": "MUST BCS/25"
+}

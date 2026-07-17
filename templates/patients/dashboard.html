@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Welcome back, {{ current_user.full_name }}{% endblock %}
+{% block content %}
+{% if my_risk %}
+<div class="risk-banner risk-{{ my_risk.level }}">
+  <div class="risk-banner-left">
+    <span class="risk-icon">{% if my_risk.level=='low' %}✅{% elif my_risk.level=='medium' %}⚠️{% elif my_risk.level=='high' %}🚧{% else %}🚨{% endif %}</span>
+    <div><strong>Risk Level: {{ my_risk.level|upper }}</strong><p>Score: {{ (my_risk.score*100)|round|int }}% — {{ my_risk.reason }}</p></div>
+  </div>
+  {% if current_user.last_location %}<span style="font-size:12px;color:inherit;opacity:.8">🌍 {{ current_user.last_location }} &nbsp;|&nbsp; 🖥 {{ current_user.last_device or '—' }}</span>{% endif %}
+</div>
+{% endif %}
+<div class="stats-grid">
+  <div class="stat-card c-indigoa"><div class="stat-icon si-indigo">👥</div><div><div class="stat-label">Total Patients</div><div class="stat-value">{{ total_patients }}</div></div></div>
+  <div class="stat-card c-greena"><div class="stat-icon si-green">📋</div><div><div class="stat-label">Medical Records</div><div class="stat-value">{{ total_records }}</div></div></div>
+  
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>👥 Recent Patients</h3><a href="{{ url_for('patients.patient_list') }}" class="link-more">View all →</a></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>ID</th><th>Name</th><th>Gender</th><th>Registered</th><th></th></tr></thead><tbody>
+    {% for p in recent_patients %}<tr><td><code>{{ p.patient_id }}</code></td><td><strong style="color:var(--tx-1)">{{ p.full_name }}</strong></td><td>{{ p.gender }}</td><td>{{ p.registered_at|eat_date }}</td><td><a href="{{ url_for('patients.view_patient',patient_id=p.id) }}" class="link-action">View</a></td></tr>
+    {% else %}<tr><td colspan="5" class="empty-row">No patients yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  {% if current_user.role=='admin' and risk_users %}
+  <div class="card">
+    <div class="card-header"><h3>🤖 Recent Risk Events</h3><a href="{{ url_for('admin.risk_logs') }}" class="link-more">View all →</a></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>User</th><th>Level</th><th>Score</th><th>Action</th><th>Time</th></tr></thead><tbody>
+    {% for r in risk_users %}<tr><td>{{ r.user.username if r.user else '—' }}</td><td><span class="badge badge-risk-{{ r.risk_level }}">{{ r.risk_level }}</span></td><td>{{ (r.risk_score*100)|round|int }}%</td><td><code>{{ r.action_taken }}</code></td><td style="font-size:11px">{{ r.timestamp|eat('%d %b %H:%M') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

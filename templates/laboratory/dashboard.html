@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% block title %}Lab Dashboard{% endblock %}{% block page_title %}Laboratory Dashboard{% endblock %}{% block page_sub %}Test requests, processing & results{% endblock %}
+{% block content %}
+{% if my_risk %}<div class="risk-banner risk-{{ my_risk.level }}"><div class="risk-banner-left"><span class="risk-icon">{% if my_risk.level=='low' %}✅{% elif my_risk.level=='medium' %}⚠️{% else %}🚨{% endif %}</span><div><strong>Risk Level: {{ my_risk.level|upper }}</strong><p>{{ my_risk.reason }}</p></div></div></div>{% endif %}
+<div class="stats-grid">
+  <div class="stat-card c-ambera"><div class="stat-icon si-amber">⏳</div><div><div class="stat-label">Pending</div><div class="stat-value">{{ pending }}</div></div></div>
+  <div class="stat-card c-cyana"><div class="stat-icon si-cyan">🔬</div><div><div class="stat-label">In Progress</div><div class="stat-value">{{ in_progress }}</div></div></div>
+  <div class="stat-card c-greena"><div class="stat-icon si-green">✅</div><div><div class="stat-label">Completed</div><div class="stat-value">{{ completed }}</div></div></div>
+  <div class="stat-card c-reda"><div class="stat-icon si-red">🚨</div><div><div class="stat-label">Urgent / STAT</div><div class="stat-value">{{ urgent + stat_req }}</div><div class="stat-sub">{{ urgent }} urgent · {{ stat_req }} STAT</div></div></div>
+</div>
+<div class="card">
+  <div class="card-header"><h3>🔬 Recent Lab Requests</h3><a href="{{ url_for('laboratory.request_list') }}" class="link-more">View all →</a></div>
+  <div class="table-wrap"><table class="data-table">
+  <thead><tr><th>Request No</th><th>Patient</th><th>Test</th><th>Category</th><th>Priority</th><th>Status</th><th>Requested</th><th>Actions</th></tr></thead>
+  <tbody>{% for r in recent %}
+  <tr><td><code>{{ r.request_no }}</code></td>
+  <td><strong style="color:var(--tx-1)">{{ r.patient.full_name if r.patient else '—' }}</strong></td>
+  <td>{{ r.test_type }}</td><td>{{ r.test_category or '—' }}</td>
+  <td><span class="badge badge-{{ r.priority }}">{{ r.priority }}</span></td>
+  <td><span class="badge badge-{{ r.status }}">{{ r.status }}</span></td>
+  <td style="font-size:11px">{{ r.created_at|eat('%d %b %H:%M') }}</td>
+  <td><a href="{{ url_for('laboratory.view_request',rid=r.id) }}" class="link-action">View</a>
+  {% if r.status=='pending' %}&nbsp;<a href="{{ url_for('laboratory.enter_result',rid=r.id) }}" class="btn btn-primary btn-xs">Enter Result</a>{% endif %}</td>
+  </tr>{% else %}<tr><td colspan="8" class="empty-row">No lab requests yet.</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+{% endblock %}

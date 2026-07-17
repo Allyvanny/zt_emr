@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Create Patient Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#dff8f8,#e8f0ff,#efe8ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.card{background:#fff;border-radius:24px;padding:2.5rem;width:100%;max-width:580px;box-shadow:0 20px 60px rgba(0,180,180,.15)}
+.logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#00d4d4,#7c5cbf);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px}
+h1{text-align:center;font-size:1.4rem;font-weight:800;color:#1a2332}
+.sub{text-align:center;font-size:13px;color:#7a95a8;margin-top:4px;margin-bottom:1.5rem}
+.alert{padding:11px 14px;border-radius:10px;margin-bottom:1rem;font-size:13px;font-weight:500;border-left:3px solid}
+.alert-danger{background:rgba(232,68,90,.07);border-color:#e8445a;color:#c0243a}
+.alert-success{background:rgba(0,200,150,.07);border-color:#00c896;color:#007a5a}
+.section-title{font-size:11px;font-weight:700;color:#00b8b8;text-transform:uppercase;letter-spacing:.1em;padding-bottom:8px;border-bottom:2px solid rgba(0,212,212,.1);margin-bottom:1rem;margin-top:1.5rem}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:500px){.row{grid-template-columns:1fr}}
+.fg{margin-bottom:.9rem}
+.fg label{display:block;font-size:11px;font-weight:700;color:#3d5166;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.fg input,.fg select{width:100%;padding:10px 13px;background:#f4fbfc;border:1.5px solid rgba(0,212,212,.18);border-radius:10px;font-size:13px;color:#1a2332;font-family:'Inter',sans-serif;transition:all .15s}
+.fg input:focus,.fg select:focus{outline:none;border-color:#00d4d4;box-shadow:0 0 0 3px rgba(0,212,212,.1);background:#fff}
+.fg select option{background:#fff}
+.req{color:#e8445a}
+.hint{font-size:11px;color:#b0c4ce;margin-top:3px}
+.btn{width:100%;padding:13px;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 16px rgba(0,212,212,.3);margin-top:1rem;transition:all .15s}
+.btn:hover{opacity:.92;transform:translateY(-1px)}
+.login-link{text-align:center;margin-top:1.25rem;font-size:13px;color:#7a95a8}
+.login-link a{color:#00b8b8;font-weight:600;text-decoration:none}
+.lang-switch{display:flex;justify-content:center;gap:2px;background:#f4fbfc;border:1px solid rgba(0,212,212,.18);border-radius:100px;padding:2px;width:fit-content;margin:0 auto 1.1rem}
+.lang-switch a{padding:4px 14px;border-radius:100px;font-size:11px;font-weight:700;text-decoration:none;color:#7a95a8;transition:all .15s}
+.lang-switch a.active{background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="lang-switch">
+    <a href="{{ url_for('patient_auth.set_language', lang='en') }}" class="{{ 'active' if current_lang=='en' }}">EN</a>
+    <a href="{{ url_for('patient_auth.set_language', lang='sw') }}" class="{{ 'active' if current_lang=='sw' }}">SW</a>
+  </div>
+  <div class="logo">🏥</div>
+  <h1>{{ t('create_your_account') }}</h1>
+  <p class="sub">{{ t('join_portal') }}</p>
+
+  {% with messages=get_flashed_messages(with_categories=true) %}
+    {% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <p class="section-title">{{ t('section_credentials') }}</p>
+    <div class="row">
+      <div class="fg"><label>{{ t('username') }} <span class="req">*</span></label><input type="text" name="username" placeholder="e.g. john_doe" required><p class="hint">{{ t('username_hint') }}</p></div>
+      <div class="fg"><label>{{ t('email_address') }} <span class="req">*</span></label><input type="email" name="email" placeholder="you@email.com" required></div>
+    </div>
+    <div class="row">
+      <div class="fg"><label>{{ t('password') }} <span class="req">*</span></label><input type="password" name="password" placeholder="{{ t('min_6_chars') }}" required></div>
+      <div class="fg"><label>{{ t('confirm_password') }} <span class="req">*</span></label><input type="password" name="confirm_password" placeholder="{{ t('repeat_password') }}" required></div>
+    </div>
+
+    <p class="section-title">{{ t('section_personal') }}</p>
+    <div class="fg"><label>{{ t('full_name') }} <span class="req">*</span></label><input type="text" name="full_name" placeholder="{{ t('full_name_hint') }}" required></div>
+    <div class="row">
+      <div class="fg"><label>{{ t('date_of_birth') }}</label><input type="date" name="date_of_birth"></div>
+      <div class="fg"><label>{{ t('gender') }}</label>
+        <select name="gender"><option value="">{{ t('select_placeholder') }}</option><option>{{ t('male') }}</option><option>{{ t('female') }}</option><option>{{ t('other') }}</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="fg"><label>{{ t('phone_number') }}</label><input type="text" name="phone" placeholder="+255 7XX XXX XXX"></div>
+      <div class="fg"><label>{{ t('blood_group') }}</label>
+        <select name="blood_group"><option value="">{{ t('select_placeholder') }}</option>
+        {% for bg in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}<option>{{ bg }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label>{{ t('address') }}</label><input type="text" name="address" placeholder="{{ t('address') }}"></div>
+    <div class="fg"><label>{{ t('emergency_contact') }}</label><input type="text" name="emergency_contact" placeholder="+255 7XX XXX XXX"><p class="hint">{{ t('emergency_hint') }}</p></div>
+
+    <button type="submit" class="btn">{{ t('create_account_btn') }}</button>
+  </form>
+
+  <div class="login-link">{{ t('already_have_account') }} <a href="{{ url_for('patient_auth.login') }}">{{ t('sign_in_link') }}</a></div>
+</div>
+</body></html>

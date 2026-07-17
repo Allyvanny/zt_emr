@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment{% endblock %}
+{% block page_title %}Book Appointment{% endblock %}
+{% block page_sub %}Schedule a patient appointment{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="{{ url_for('appointments.appointment_list') }}" class="breadcrumb">← Appointments</a>
+    <h2>Book New Appointment</h2>
+  </div>
+</div>
+
+<div class="form-card form-card-narrow">
+  <form method="POST" action="{{ url_for('appointments.book_appointment') }}">
+    <div class="form-section">
+      <p class="form-section-title">📅 Appointment Details</p>
+
+      <div class="form-group">
+        <label>Patient <span class="required">*</span></label>
+        <select name="patient_id" required>
+          <option value="">— Select patient —</option>
+          {% for p in patients %}
+          <option value="{{ p.id }}">{{ p.full_name }} ({{ p.patient_id }})</option>
+          {% endfor %}
+        </select>
+        <p class="form-hint">
+          Patient not listed? <a href="{{ url_for('patients.register_patient') }}" style="color:var(--teal-2)">Register new patient →</a>
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label>Doctor <span class="required">*</span></label>
+        <select name="doctor_id" required>
+          <option value="">— Select doctor —</option>
+          {% for doc in doctors %}
+          <option value="{{ doc.id }}" {{ 'selected' if current_user.role=='doctor' and doc.id==current_user.id }}>
+            {{ doc.full_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Appointment Date & Time <span class="required">*</span></label>
+        <input type="datetime-local" name="appointment_date" required>
+      </div>
+
+      <div class="form-group">
+        <label>Reason for Visit</label>
+        <input type="text" name="reason" placeholder="e.g. Follow-up, General check-up, Chronic disease review…">
+      </div>
+
+      <div class="form-group">
+        <label>Additional Notes</label>
+        <textarea name="notes" rows="3" placeholder="Any additional information for the doctor…"></textarea>
+      </div>
+    </div>
+
+    {% if current_user.role == 'doctor' %}
+    <div style="background:var(--success-bg);border:1px solid rgba(0,200,150,.25);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:#007a5a">
+      ✅ Appointments you book are automatically <strong>approved</strong>.
+    </div>
+    {% else %}
+    <div style="background:var(--warning-bg);border:1px solid rgba(245,166,35,.25);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:#8a6200">
+      ⏳ Appointment will be <strong>pending</strong> until the doctor approves it.
+    </div>
+    {% endif %}
+
+    <div class="form-actions">
+      <a href="{{ url_for('appointments.appointment_list') }}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary">📅 Book Appointment</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

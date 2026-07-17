@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Users{% endblock %}{% block page_title %}User Management{% endblock %}{% block page_sub %}Admin-controlled account provisioning{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>User Accounts</h2><p class="page-sub">Only admins can create or modify accounts.</p></div><a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">+ Create User</a></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Email</th><th>Last Login</th><th>Location</th><th>Device</th><th>Status</th><th>Fails</th><th>MFA</th><th>Actions</th></tr></thead>
+<tbody>{% for u in users %}<tr class="{{ 'row-locked' if u.is_locked else '' }}">
+<td><strong style="color:var(--tx-1)">{{ u.full_name }}</strong></td>
+<td><code>{{ u.username }}</code></td>
+<td><span class="badge badge-{{ u.role }}">{{ u.role|replace('_',' ')|title }}</span></td>
+<td style="font-size:12px">{{ u.email }}</td>
+<td style="font-size:12px">{{ u.last_login.strftime('%d %b %Y %H:%M') if u.last_login else 'Never' }}</td>
+<td style="font-size:12px">{{ u.last_location or '—' }}</td>
+<td style="font-size:11px;max-width:130px;word-break:break-word">{{ u.last_device or '—' }}</td>
+<td>{% if u.is_locked %}<span class="badge badge-danger">Locked</span>{% else %}<span class="badge badge-success">Active</span>{% endif %}</td>
+<td>{% if u.failed_attempts > 0 %}<span class="badge badge-warning">{{ u.failed_attempts }}</span>{% else %}<span class="text-muted">0</span>{% endif %}</td>
+<td>{% if u.requires_otp %}<span class="badge badge-warning">Forced</span>{% else %}<span class="text-muted">Auto</span>{% endif %}</td>
+<td style="white-space:nowrap">
+  <a href="{{ url_for('admin.edit_user',uid=u.id) }}" class="link-action">✏️ Edit</a>
+  &nbsp;
+  <a href="{{ url_for('forensics.user_timeline',uid=u.id) }}" class="link-action">Timeline</a>
+  {% if u.id != current_user.id %}
+  &nbsp;<form method="POST" action="{{ url_for('admin.toggle_lock',uid=u.id) }}" style="display:inline"><button type="submit" class="btn-link {{ 'btn-link-success' if u.is_locked else 'btn-link-danger' }}">{{ 'Unlock' if u.is_locked else 'Lock' }}</button></form>
+  &nbsp;<form method="POST" action="{{ url_for('admin.force_mfa',uid=u.id) }}" style="display:inline"><button type="submit" class="btn-link btn-link-warning">Force MFA</button></form>
+  {% if u.requires_otp %}&nbsp;<form method="POST" action="{{ url_for('admin.clear_mfa',uid=u.id) }}" style="display:inline"><button type="submit" class="btn-link btn-link-success">Clear MFA</button></form>{% endif %}
+  {% endif %}
+</td></tr>{% endfor %}</tbody>
+</table></div></div>{% endblock %}

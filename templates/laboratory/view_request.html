@@ -1,0 +1,48 @@
+{% extends "base.html" %}{% block title %}Lab Request {{ req.request_no }}{% endblock %}{% block page_title %}Lab Request{% endblock %}{% block page_sub %}{{ req.request_no }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('laboratory.request_list') }}" class="breadcrumb">← Lab Requests</a><h2>{{ req.request_no }}</h2></div>
+<div class="header-actions">
+  {% if req.status == 'completed' %}
+  <a href="{{ url_for('laboratory.print_result',rid=req.id) }}" target="_blank" class="btn btn-ghost btn-sm">🖨️ Print</a>
+  {% endif %}
+  {% if req.status=='pending' %}
+  <form method="POST" action="{{ url_for('laboratory.process_request',rid=req.id) }}"><button type="submit" class="btn btn-info">🔬 Mark In Progress</button></form>
+  <a href="{{ url_for('laboratory.enter_result',rid=req.id) }}" class="btn btn-primary">✓ Enter Result</a>
+  {% elif req.status=='in_progress' %}
+  <a href="{{ url_for('laboratory.enter_result',rid=req.id) }}" class="btn btn-primary">✓ Complete & Enter Result</a>
+  {% endif %}
+</div></div>
+<div class="grid-2">
+<div class="card card-body">
+  <p class="form-section-title">Request Details</p>
+  <div class="info-grid">
+    <div class="info-row"><span class="info-label">Request No</span><span class="info-value"><code>{{ req.request_no }}</code></span></div>
+    <div class="info-row"><span class="info-label">Patient</span><span class="info-value"><strong style="color:var(--tx-1)">{{ req.patient.full_name if req.patient else '—' }}</strong></span></div>
+    <div class="info-row"><span class="info-label">Test Type</span><span class="info-value">{{ req.test_type }}</span></div>
+    <div class="info-row"><span class="info-label">Category</span><span class="info-value">{{ req.test_category }}</span></div>
+    <div class="info-row"><span class="info-label">Priority</span><span class="info-value"><span class="badge badge-{{ req.priority }}">{{ req.priority }}</span></span></div>
+    <div class="info-row"><span class="info-label">Specimen</span><span class="info-value">{{ req.specimen_type or '—' }}</span></div>
+    <div class="info-row"><span class="info-label">Status</span><span class="info-value"><span class="badge badge-{{ req.status }}">{{ req.status }}</span></span></div>
+    <div class="info-row"><span class="info-label">Requested By</span><span class="info-value">{{ req.requester.full_name if req.requester else '—' }}</span></div>
+    <div class="info-row"><span class="info-label">Processed By</span><span class="info-value">{{ req.processor.full_name if req.processor else '—' }}</span></div>
+    <div class="info-row"><span class="info-label">Requested At</span><span class="info-value">{{ req.created_at|eat }}</span></div>
+    {% if req.completed_at %}<div class="info-row"><span class="info-label">Completed At</span><span class="info-value">{{ req.completed_at|eat }}</span></div>{% endif %}
+    {% if req.clinical_notes %}<div class="info-row"><span class="info-label">Clinical Notes</span><span class="info-value">{{ req.clinical_notes }}</span></div>{% endif %}
+  </div>
+</div>
+{% if req.result %}
+<div class="card card-body">
+  <p class="form-section-title">📊 Lab Result</p>
+  <div style="margin-bottom:1rem"><span class="badge badge-{{ 'normal' if req.result.interpretation=='normal' else ('abnormal' if req.result.interpretation=='abnormal' else 'critical-result') }}" style="font-size:13px;padding:5px 14px">{{ req.result.interpretation|upper }}</span></div>
+  <div class="info-grid">
+    <div class="info-row"><span class="info-label">Result</span><span class="info-value" style="font-family:'JetBrains Mono',monospace;font-size:12px;text-align:left">{{ req.result.result_data }}</span></div>
+    {% if req.result.reference_range %}<div class="info-row"><span class="info-label">Reference Range</span><span class="info-value">{{ req.result.reference_range }}</span></div>{% endif %}
+    {% if req.result.comments %}<div class="info-row"><span class="info-label">Comments</span><span class="info-value">{{ req.result.comments }}</span></div>{% endif %}
+    <div class="info-row"><span class="info-label">Verified By</span><span class="info-value">{{ req.result.verifier.full_name if req.result.verifier else '—' }}</span></div>
+    <div class="info-row"><span class="info-label">Reported At</span><span class="info-value">{{ req.result.created_at|eat }}</span></div>
+  </div>
+</div>
+{% else %}
+<div class="card card-body"><div class="empty-state"><p>No result entered yet.</p>{% if req.status in ['pending','in_progress'] %}<a href="{{ url_for('laboratory.enter_result',rid=req.id) }}" class="btn btn-primary" style="margin-top:1rem">Enter Result</a>{% endif %}</div></div>
+{% endif %}
+</div>{% endblock %}

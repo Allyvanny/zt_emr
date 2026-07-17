@@ -1,0 +1,170 @@
+{% extends "base.html" %}{% block title %}{{ patient.full_name }}{% endblock %}{% block page_title %}Patient Record{% endblock %}{% block page_sub %}{{ patient.patient_id }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('patients.patient_list') }}" class="breadcrumb">← Patients</a><h2>{{ patient.full_name }}</h2><p class="page-sub"><code>{{ patient.patient_id }}</code></p></div>
+<div class="header-actions">
+  {% if current_user.role in ['admin','doctor','nurse'] %}<a href="{{ url_for('patients.add_record',patient_id=patient.id) }}" class="btn btn-primary">+ Medical Record</a>{% endif %}
+  {% if current_user.role in ['admin','doctor','nurse'] %}<a href="{{ url_for('patients.vital_signs',patient_id=patient.id) }}" class="btn btn-info btn-sm">🩺 Vitals</a>{% endif %}
+  {% if current_user.role in ['doctor','admin'] %}<a href="{{ url_for('laboratory.new_request') }}" class="btn btn-info btn-sm">🔬 Order Lab</a>{% endif %}
+</div></div>
+
+<!-- Allergy Alert Banner -->
+{% set active_allergies = allergies|selectattr('status','equalto','active')|list %}
+{% if active_allergies %}
+<div style="background:linear-gradient(135deg,rgba(232,68,90,.08),rgba(232,68,90,.04));border:1.5px solid rgba(232,68,90,.3);border-radius:12px;padding:14px 18px;margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:12px">
+  <span style="font-size:1.5rem;flex-shrink:0">🚨</span>
+  <div style="flex:1">
+    <p style="font-size:13px;font-weight:700;color:#b91c1c;margin-bottom:4px">ALLERGY ALERT — {{ active_allergies|length }} Active Allerg{{ 'y' if active_allergies|length == 1 else 'ies' }}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      {% for a in active_allergies %}
+      <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;{% if a.severity in ['severe','life-threatening'] %}background:rgba(232,68,90,.15);color:#b91c1c{% elif a.severity == 'moderate' %}background:rgba(245,166,35,.15);color:#92400e{% else %}background:rgba(107,114,128,.1);color:#374151{% endif %}">
+        {{ a.allergen }}{% if a.reaction %} ({{ a.reaction }}){% endif %} — {{ a.severity|upper }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="detail-grid">
+  <div class="patient-info-card">
+    <div class="patient-avatar">{{ patient.full_name[0] }}</div>
+    <h3>{{ patient.full_name }}</h3><span class="badge" style="background:rgba(99,102,241,.15);color:var(--brand-3)">{{ patient.gender }}</span>
+    <div class="info-grid">
+      <div class="info-row"><span class="info-label">Patient ID</span><span class="info-value"><code>{{ patient.patient_id }}</code></span></div>
+      <div class="info-row"><span class="info-label">Date of Birth</span><span class="info-value">{{ patient.date_of_birth|eat_date if patient.date_of_birth else '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Blood Group</span><span class="info-value"><span class="blood-badge">{{ patient.blood_group or '—' }}</span></span></div>
+      <div class="info-row"><span class="info-label">Phone</span><span class="info-value">{{ patient.phone or '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Address</span><span class="info-value">{{ patient.address or '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Emergency</span><span class="info-value">{{ patient.emergency_contact or '—' }}</span></div>
+      <div class="info-row"><span class="info-label">Records</span><span class="info-value">{{ records|length }}</span></div>
+      <div class="info-row"><span class="info-label">Prescriptions</span><span class="info-value">{{ prescriptions|length }}</span></div>
+      <div class="info-row"><span class="info-label">Lab Requests</span><span class="info-value">{{ lab_requests|length }}</span></div>
+    </div>
+
+    <!-- Vital Signs Summary -->
+    {% if latest_vitals %}
+    <div style="margin-top:1rem;text-align:left;border-top:1px solid var(--border-2);padding-top:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <p style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tx-4)">Latest Vital Signs</p>
+        <a href="{{ url_for('patients.vital_signs',patient_id=patient.id) }}" style="font-size:11px;color:var(--brand-3);text-decoration:none;font-weight:600">+ Record</a>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px">
+        {% if latest_vitals.temperature_celsius %}<div style="display:flex;justify-content:space-between"><span style="color:var(--tx-3)">Temp</span><span style="font-weight:600;color:var(--tx-1)">{{ latest_vitals.temperature_celsius }}°C</span></div>{% endif %}
+        {% if latest_vitals.bp_systolic %}<div style="display:flex;justify-content:space-between"><span style="color:var(--tx-3)">BP</span><span style="font-weight:600;color:var(--tx-1)">{{ latest_vitals.bp_systolic }}/{{ latest_vitals.bp_diastolic }}</span></div>{% endif %}
+        {% if latest_vitals.pulse_rate %}<div style="display:flex;justify-content:space-between"><span style="color:var(--tx-3)">Pulse</span><span style="font-weight:600;color:var(--tx-1)">{{ latest_vitals.pulse_rate }} bpm</span></div>{% endif %}
+        {% if latest_vitals.spo2_percent %}<div style="display:flex;justify-content:space-between"><span style="color:var(--tx-3)">SpO2</span><span style="font-weight:600;color:var(--tx-1)">{{ latest_vitals.spo2_percent }}%</span></div>{% endif %}
+        {% if latest_vitals.weight_kg %}<div style="display:flex;justify-content:space-between"><span style="color:var(--tx-3)">Weight</span><span style="font-weight:600;color:var(--tx-1)">{{ latest_vitals.weight_kg }} kg</span></div>{% endif %}
+        {% if latest_vitals.bmi %}<div style="display:flex;justify-content:space-between"><span style="color:var(--tx-3)">BMI</span><span style="font-weight:600;color:var(--tx-1)">{{ latest_vitals.bmi }}</span></div>{% endif %}
+      </div>
+      <p style="font-size:10px;color:var(--tx-4);margin-top:4px">Recorded: {{ latest_vitals.recorded_at|eat }}</p>
+    </div>
+    {% else %}
+    <div style="margin-top:1rem;border-top:1px solid var(--border-2);padding-top:1rem;text-align:center">
+      <p style="font-size:11px;color:var(--tx-4);margin-bottom:6px">No vital signs recorded</p>
+      {% if current_user.role in ['admin','doctor','nurse'] %}
+      <a href="{{ url_for('patients.vital_signs',patient_id=patient.id) }}" class="btn btn-info btn-sm" style="width:100%;justify-content:center">🩺 Record Vitals</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Allergy Management -->
+    <div style="margin-top:1rem;text-align:left;border-top:1px solid var(--border-2);padding-top:1rem">
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tx-4);margin-bottom:8px">Allergies</p>
+      {% if allergies %}
+        {% for a in allergies %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border-2);font-size:12px">
+          <div>
+            <span style="font-weight:600;color:var(--tx-1)">{{ a.allergen }}</span>
+            {% if a.reaction %}<span style="color:var(--tx-3)"> — {{ a.reaction }}</span>{% endif %}
+            <span style="display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;margin-left:4px;{% if a.severity in ['severe','life-threatening'] %}background:rgba(232,68,90,.15);color:#b91c1c{% elif a.severity == 'moderate' %}background:rgba(245,166,35,.15);color:#92400e{% else %}background:rgba(107,114,128,.1);color:#374151{% endif %}">{{ a.severity|upper }}</span>
+            {% if a.status == 'resolved' %}<span style="display:inline-block;padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;background:rgba(0,200,150,.1);color:#047857;margin-left:4px">RESOLVED</span>{% endif %}
+          </div>
+          {% if a.status == 'active' and current_user.role in ['admin','doctor','nurse'] %}
+          <form method="POST" action="{{ url_for('patients.resolve_allergy',patient_id=patient.id,allergy_id=a.id) }}" style="margin:0">
+            <button type="submit" style="background:none;border:none;color:var(--tx-4);cursor:pointer;font-size:10px;padding:2px 6px;border-radius:4px" title="Mark resolved">✓</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="font-size:12px;color:var(--tx-4)">No allergies recorded</p>
+      {% endif %}
+      {% if current_user.role in ['admin','doctor','nurse'] %}
+      <form method="POST" action="{{ url_for('patients.add_allergy',patient_id=patient.id) }}" style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+        <input type="text" name="allergen" placeholder="Allergen" required style="flex:1;min-width:80px;padding:5px 8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:6px;font-size:11px;color:var(--tx-1)">
+        <input type="text" name="reaction" placeholder="Reaction" style="flex:1;min-width:80px;padding:5px 8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:6px;font-size:11px;color:var(--tx-1)">
+        <select name="severity" style="padding:5px 8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:6px;font-size:11px;color:var(--tx-1)">
+          <option value="mild">Mild</option><option value="moderate" selected>Moderate</option><option value="severe">Severe</option><option value="life-threatening">Life-Threat</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm" style="padding:5px 10px;font-size:11px">+ Add</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if prescriptions %}
+    <div style="margin-top:1rem;text-align:left;border-top:1px solid var(--border-2);padding-top:1rem">
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tx-4);margin-bottom:6px">Recent Prescriptions</p>
+      {% for rx in prescriptions %}<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-2);font-size:12px"><code>{{ rx.prescription_no }}</code><span class="badge badge-{{ rx.status }}">{{ rx.status }}</span></div>{% endfor %}
+    </div>
+    {% endif %}
+    {% if lab_requests %}
+    <div style="margin-top:1rem;text-align:left;border-top:1px solid var(--border-2);padding-top:1rem">
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tx-4);margin-bottom:6px">Recent Lab Requests</p>
+      {% for lr in lab_requests %}<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border-2);font-size:12px"><span style="color:var(--tx-2)">{{ lr.test_type[:25] }}</span><span class="badge badge-{{ lr.status }}">{{ lr.status }}</span></div>{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <div>
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--tx-1)">Medical Records <span class="record-count">{{ records|length }}</span></h3>
+    {% for r in records %}
+    <div class="record-card {% if r.is_confidential %}record-confidential{% endif %}">
+      <div class="record-header"><div><strong style="color:var(--tx-1)">{{ r.visit_date|eat_date }}</strong>{% if r.doctor %}<span class="record-doctor">by {{ r.doctor.full_name }}</span>{% endif %}</div>
+      <div>{% if r.is_confidential %}<span class="badge badge-danger">Confidential</span>{% endif %}<span class="badge" style="background:rgba(99,102,241,.15);color:var(--brand-3);max-width:180px;overflow:hidden;text-overflow:ellipsis">{{ r.diagnosis or 'No diagnosis' }}</span></div></div>
+      <div class="record-body">
+        {% for lbl,val in [('Symptoms',r.symptoms),('Diagnosis',r.diagnosis),('Treatment',r.treatment),('Prescription',r.prescription),('Lab Results',r.lab_results),('Notes',r.notes)] %}{% if val %}<div class="record-field"><span class="field-label">{{ lbl }}</span><span style="color:var(--tx-2)">{{ val }}</span></div>{% endif %}{% endfor %}
+      </div>
+    </div>
+    {% else %}<div class="empty-state"><p>No medical records yet.</p></div>{% endfor %}
+  </div>
+
+  <!-- Patient Portal Account Status -->
+    {% if current_user.role in ['receptionist','admin','doctor','nurse'] %}
+    <div style="margin-top:1.25rem;border-top:1px solid var(--border-2);padding-top:1rem">
+      <p style="font-size:11px;font-weight:700;color:var(--tx-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.65rem">
+        🏥 Patient Portal Account
+      </p>
+
+      {% set portal_account = patient.account if patient.account else none %}
+
+      {% if portal_account %}
+        <div style="background:var(--success-bg);border:1px solid rgba(0,200,150,.25);border-radius:10px;padding:10px 14px;margin-bottom:8px">
+          <p style="font-size:13px;font-weight:700;color:#007a5a">✅ Portal account active</p>
+          <p style="font-size:12px;color:#007a5a;margin-top:2px">
+            Username: <strong>{{ portal_account.username }}</strong><br>
+            Last login: {{ portal_account.last_login|eat if portal_account.last_login else 'Never logged in' }}
+          </p>
+        </div>
+        <form method="POST" action="{{ url_for('patient_auth.reset_patient_password', patient_db_id=patient.id) }}"
+              style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="text" name="new_password" placeholder="New password (min 6 chars)"
+                 style="flex:1;padding:7px 12px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:8px;font-size:12px;color:var(--tx-1);font-family:'Inter',sans-serif;min-width:180px">
+          <button type="submit" class="btn btn-secondary btn-sm">🔑 Reset Password</button>
+        </form>
+
+      {% else %}
+        <div style="background:var(--warning-bg);border:1px solid rgba(245,166,35,.25);border-radius:10px;padding:10px 14px;margin-bottom:8px">
+          <p style="font-size:13px;font-weight:600;color:#8a6200">⚠️ No portal account yet</p>
+          <p style="font-size:12px;color:#8a6200;margin-top:2px">
+            Patient cannot log in to the portal until you create an account for them.
+          </p>
+        </div>
+        <a href="{{ url_for('patient_auth.create_portal_account', patient_db_id=patient.id) }}"
+           class="btn btn-primary btn-sm" style="width:100%;justify-content:center">
+          🏥 Create Patient Portal Account
+        </a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

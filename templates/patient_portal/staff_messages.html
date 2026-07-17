@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Patient Messages{% endblock %}
+{% block page_title %}Patient Messages{% endblock %}
+{% block page_sub %}Messages received from patients{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h2>Patient Messages</h2>
+    <p class="page-sub">{{ received|length }} messages · {{ unread_count }} unread</p>
+  </div>
+  <a href="{{ url_for('patient_portal.staff_appointment_requests') }}" class="btn btn-secondary btn-sm">📅 Appointment Requests</a>
+</div>
+
+<div class="card">
+  {% if received %}
+  {% for msg in received %}
+  <div style="padding:14px 16px;border-bottom:1px solid var(--border-2);{% if not msg.is_read %}background:rgba(0,212,212,.03);border-left:3px solid #00d4d4;{% endif %}">
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">
+        {{ msg.sender_patient.full_name[0] if msg.sender_patient else '?' }}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap">
+          <strong style="font-size:13px;color:var(--tx-1)">{{ msg.sender_patient.full_name if msg.sender_patient else '—' }}</strong>
+          {% if not msg.is_read %}<span class="badge badge-danger" style="font-size:10px">NEW</span>{% endif %}
+          <span class="badge badge-{{ msg.message_type }}">{{ msg.type_icon }} {{ msg.message_type|replace('_',' ')|title }}</span>
+          <span style="font-size:11px;color:var(--tx-3);margin-left:auto">{{ msg.created_at|eat }}</span>
+        </div>
+        <p style="font-size:13px;font-weight:600;color:var(--tx-1);margin-bottom:4px">{{ msg.subject }}</p>
+        <p style="font-size:12px;color:var(--tx-3);line-height:1.5;margin-bottom:10px">{{ msg.body[:200] }}{% if msg.body|length > 200 %}…{% endif %}</p>
+
+        <!-- Reply form -->
+        <div id="reply-area-{{ msg.id }}" style="display:none;margin-top:8px">
+          <form method="POST" action="{{ url_for('patient_portal.staff_reply', msg_id=msg.id) }}">
+            <textarea name="body" rows="3" placeholder="Type your reply to {{ msg.sender_patient.full_name if msg.sender_patient else 'patient' }}…"
+              style="width:100%;padding:10px 14px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--tx-1);font-family:'Inter',sans-serif;resize:vertical;margin-bottom:8px"></textarea>
+            <div style="display:flex;gap:8px">
+              <button type="submit" class="btn btn-success btn-sm">📤 Send Reply</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('reply-area-{{ msg.id }}').style.display='none'">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Show replies already sent -->
+        {% for reply in msg.replies %}
+        <div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-top:8px;display:flex;gap:10px">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--brand-grd);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">
+            {{ reply.sender_staff.full_name[0] if reply.sender_staff else '?' }}
+          </div>
+          <div>
+            <p style="font-size:11px;font-weight:700;color:var(--tx-3);margin-bottom:2px">You replied · {{ reply.created_at|eat('%d %b %H:%M') }}</p>
+            <p style="font-size:13px;color:var(--tx-2)">{{ reply.body }}</p>
+          </div>
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:8px">
+          <button class="btn btn-info btn-sm" onclick="toggleReply({{ msg.id }})">↩️ Reply to Patient</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state" style="padding:3rem">
+    <div style="font-size:2.5rem;margin-bottom:10px">📭</div>
+    <p>No patient messages yet.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleReply(id){
+  const el=document.getElementById('reply-area-'+id);
+  el.style.display=el.style.display==='none'?'block':'none';
+  if(el.style.display==='block') el.querySelector('textarea').focus();
+}
+</script>
+{% endblock %}

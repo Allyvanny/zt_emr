@@ -1,0 +1,60 @@
+{% extends "patient_portal/base.html" %}
+{% block title %}{{ t('my_appointments_title') }}{% endblock %}
+{% block page_title %}{{ t('my_appointments_title') }}{% endblock %}
+{% block page_sub %}{{ t('my_appointments_sub') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h2>{{ t('my_appt_requests_h2') }}</h2><p class="page-sub">{{ t('total_requests_count', n=requests|length) }}</p></div>
+  <a href="{{ url_for('patient_portal.request_appointment') }}" class="btn btn-primary">{{ t('new_request_btn') }}</a>
+</div>
+
+{% if requests %}
+{% for req in requests %}
+<div class="card" style="margin-bottom:1rem">
+  <div style="padding:1.25rem">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <code style="font-size:11px">{{ req.request_no }}</code>
+          <span class="badge badge-{{ req.status }}">{{ req.status|upper }}</span>
+          <span class="badge badge-{{ req.urgency }}">{{ req.urgency }}</span>
+        </div>
+        <h3 style="font-size:14px;font-weight:700;color:#1a2332;margin-bottom:4px">{{ req.reason[:80] }}{% if req.reason|length > 80 %}…{% endif %}</h3>
+        <div style="font-size:12px;color:#7a95a8;display:flex;gap:16px;flex-wrap:wrap;margin-top:4px">
+          <span>🩺 {{ req.preferred_doctor.full_name if req.preferred_doctor else t('any_available_doctor') }}</span>
+          <span>📅 {{ req.preferred_date|eat('%d %b %Y, %H:%M') if req.preferred_date else t('flexible') }}</span>
+          {% if req.preferred_date_2 %}<span>📅 {{ t('alt_label') }} {{ req.preferred_date_2|eat('%d %b %Y, %H:%M') }}</span>{% endif %}
+          <span>{{ t('requested_label') }} {{ req.created_at|eat_date }}</span>
+        </div>
+      </div>
+    </div>
+
+    {% if req.status == 'pending' %}
+    <div style="margin-top:.75rem;display:flex;align-items:center;gap:8px;background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.15);border-radius:8px;padding:8px 12px">
+      <span style="font-size:16px">⏳</span>
+      <p style="font-size:12px;color:#8a6200">{{ t('status_pending_note') }}</p>
+    </div>
+    {% elif req.status == 'approved' %}
+    <div style="margin-top:.75rem;display:flex;align-items:center;gap:8px;background:rgba(0,200,150,.06);border:1px solid rgba(0,200,150,.15);border-radius:8px;padding:8px 12px">
+      <span style="font-size:16px">✅</span>
+      <p style="font-size:12px;color:#007a5a"><strong>{{ t('status_approved_note') }}</strong> {% if req.response_notes %}{{ req.response_notes }}{% else %}{{ t('appt_confirmed') }}{% endif %}</p>
+    </div>
+    {% elif req.status == 'rejected' %}
+    <div style="margin-top:.75rem;background:rgba(232,68,90,.06);border:1px solid rgba(232,68,90,.15);border-radius:8px;padding:8px 12px">
+      <p style="font-size:12px;color:#c0243a">❌ <strong>{{ t('status_rejected_note') }}</strong> {% if req.response_notes %}{{ req.response_notes }}{% endif %}</p>
+      <a href="{{ url_for('patient_portal.request_appointment') }}" style="font-size:12px;color:#00b8b8;font-weight:600;text-decoration:none;margin-top:4px;display:inline-block">{{ t('submit_new_request') }}</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div style="text-align:center;padding:4rem 1rem;background:#fff;border-radius:16px;border:1px solid rgba(0,212,212,.12)">
+  <div style="font-size:3.5rem;margin-bottom:12px">📅</div>
+  <h3 style="font-size:1.1rem;font-weight:700;color:#1a2332;margin-bottom:6px">{{ t('no_appt_requests_title') }}</h3>
+  <p style="font-size:13px;color:#7a95a8;margin-bottom:1.25rem">{{ t('no_appt_requests_sub') }}</p>
+  <a href="{{ url_for('patient_portal.request_appointment') }}" class="btn btn-primary">{{ t('request_first_appt') }}</a>
+</div>
+{% endif %}
+{% endblock %}

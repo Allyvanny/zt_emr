@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block page_sub %}{{ current_user.role|replace('_',' ')|title }} — {{ current_user.email }}{% endblock %}
+
+{% block content %}
+<div class="profile-grid">
+
+  <!-- LEFT: Avatar + Info -->
+  <div class="profile-left">
+
+    <!-- Avatar Card -->
+    <div class="card card-body" style="text-align:center;margin-bottom:1.25rem">
+      <div class="profile-avatar-wrap">
+        {% if current_user.avatar %}
+          <img src="{{ url_for('uploaded_avatar', filename=current_user.avatar) }}"
+               alt="Profile Picture" class="profile-avatar-img">
+        {% else %}
+          <div class="profile-avatar-initials ua-{{ current_user.role }}">
+            {{ current_user.full_name[0] }}
+          </div>
+        {% endif %}
+        <!-- Camera overlay -->
+        <label for="avatar-file" class="avatar-camera-btn" title="Change profile picture">📷</label>
+      </div>
+
+      <h3 style="font-size:1.1rem;font-weight:800;color:var(--tx-1);margin-top:1rem">{{ current_user.full_name }}</h3>
+      <p style="font-size:12px;color:var(--tx-3);margin-top:3px">{{ current_user.email }}</p>
+      <span class="badge badge-{{ current_user.role }}" style="margin-top:8px">{{ current_user.role|replace('_',' ')|title }}</span>
+
+      <!-- Hidden file input + auto-submit form -->
+      <form method="POST" action="{{ url_for('profile.upload_avatar') }}"
+            enctype="multipart/form-data" id="avatar-form" style="margin-top:1rem">
+        <input type="file" id="avatar-file" name="avatar"
+               accept=".png,.jpg,.jpeg,.gif,.webp" style="display:none"
+               onchange="document.getElementById('avatar-form').submit()">
+        <button type="button" onclick="document.getElementById('avatar-file').click()"
+                class="btn btn-secondary btn-sm" style="width:100%">
+          📷 Change Picture
+        </button>
+      </form>
+
+      {% if current_user.avatar %}
+      <form method="POST" action="{{ url_for('profile.remove_avatar') }}" style="margin-top:6px">
+        <button type="submit" class="btn btn-danger btn-sm" style="width:100%">🗑 Remove Picture</button>
+      </form>
+      {% endif %}
+
+      <p style="font-size:10px;color:var(--tx-4);margin-top:8px">PNG, JPG, GIF, WEBP — max 5MB</p>
+    </div>
+
+    <!-- Account Info -->
+    <div class="card card-body">
+      <p class="form-section-title">Account Details</p>
+      <div class="info-grid">
+        <div class="info-row"><span class="info-label">Username</span><span class="info-value"><code>{{ current_user.username }}</code></span></div>
+        <div class="info-row"><span class="info-label">Full Name</span><span class="info-value">{{ current_user.full_name }}</span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value">{{ current_user.email }}</span></div>
+        <div class="info-row"><span class="info-label">Role</span><span class="info-value"><span class="badge badge-{{ current_user.role }}">{{ current_user.role|replace('_',' ')|title }}</span></span></div>
+        <div class="info-row"><span class="info-label">Last Login</span><span class="info-value">{{ current_user.last_login|eat if current_user.last_login else 'N/A' }}</span></div>
+        <div class="info-row"><span class="info-label">Last Location</span><span class="info-value">{{ current_user.last_location or '—' }}</span></div>
+        <div class="info-row"><span class="info-label">Last Device</span><span class="info-value" style="font-size:11px">{{ current_user.last_device or '—' }}</span></div>
+        <div class="info-row"><span class="info-label">Last IP</span><span class="info-value"><code>{{ current_user.last_ip or '—' }}</code></span></div>
+        <div class="info-row"><span class="info-label">MFA Status</span><span class="info-value">{% if current_user.requires_otp %}<span class="badge badge-warning">Forced</span>{% else %}<span class="badge badge-success">Auto</span>{% endif %}</span></div>
+      </div>
+    </div>
+
+    <!-- Risk Score -->
+    <div class="card card-body">
+      <p class="form-section-title">🤖 Current Risk Score</p>
+      <div style="text-align:center;padding:1rem 0">
+        <div style="font-size:3rem;font-weight:900;color:{% if my_risk.level=='low' %}var(--success){% elif my_risk.level=='medium' %}var(--warning){% else %}var(--danger){% endif %}">
+          {{ (my_risk.score*100)|round|int }}%
+        </div>
+        <span class="badge badge-risk-{{ my_risk.level }}" style="font-size:13px;padding:5px 14px;margin-top:8px;display:inline-block">{{ my_risk.level|upper }}</span>
+        <p style="font-size:12px;color:var(--tx-3);margin-top:10px">{{ my_risk.reason }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Change Password + Activity -->
+  <div class="profile-right">
+
+    <!-- Change Password -->
+    <div class="card card-body" style="margin-bottom:1.25rem">
+      <p class="form-section-title">🔒 Change Password</p>
+      <form method="POST" action="{{ url_for('profile.change_password') }}">
+        <div class="form-group">
+          <label>Current Password <span class="required">*</span></label>
+          <input type="password" name="current_password" required placeholder="Your current password">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>New Password <span class="required">*</span></label>
+            <input type="password" name="new_password" required placeholder="Min 8 characters">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password <span class="required">*</span></label>
+            <input type="password" name="confirm_password" required placeholder="Repeat new password">
+          </div>
+        </div>
+        <div class="form-actions" style="border:none;padding:0;margin:0">
+          <button type="submit" class="btn btn-primary">✓ Update Password</button>
+        </div>
+      </form>
+    </div>
+
+   
+  </div>
+</div>
+
+<style>
+.profile-grid { display:grid; grid-template-columns:300px 1fr; gap:1.25rem; align-items:start; }
+@media(max-width:900px){ .profile-grid { grid-template-columns:1fr; } }
+.profile-avatar-wrap { position:relative; width:120px; height:120px; margin:0 auto; }
+.profile-avatar-img { width:120px; height:120px; border-radius:50%; object-fit:cover; border:4px solid var(--teal); box-shadow:0 4px 20px rgba(0,212,212,.3); }
+.profile-avatar-initials { width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:800; color:white; border:4px solid rgba(255,255,255,.3); box-shadow:0 4px 20px rgba(0,212,212,.3); }
+.avatar-camera-btn { position:absolute; bottom:4px; right:4px; width:32px; height:32px; background:var(--teal); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; box-shadow:0 2px 8px rgba(0,0,0,.2); transition:all .15s; border:2px solid white; }
+.avatar-camera-btn:hover { background:var(--violet); transform:scale(1.1); }
+</style>
+{% endblock %}

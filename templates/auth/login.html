@@ -1,0 +1,25 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Sign In</title><link rel="stylesheet" href="{{ url_for('static',filename='css/main.css') }}"></head>
+<body class="auth-body">
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo-wrap">🚑</div>
+      <h1>Zero Trust EMR</h1>
+     
+    {% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}{% endwith %}
+    <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="off">
+      <div class="form-group"><label>Username</label><input type="text" name="username" placeholder="Enter your username" required autofocus></div>
+      <div class="form-group"><label>Password</label><input type="password" name="password" placeholder="Enter your password" required></div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:.5rem">Sign In Securely</button>
+    </form>
+
+  <div style="text-align:center;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border-2)">
+    <a href="{{ url_for('patient_auth.login') }}" style="font-size:13px;color:blue;text-decoration:none">
+      🏥 Are you a patient? Sign in to the Patient Portal →
+    </a>
+  </div>
+
+    
+  <p style="text-align:center;color:rgba(255,255,255,.2);font-size:11px;margin-top:14px">© 2025 MUST · Alto Dezdel Kiyamba · BCS/25</p>
+</div>
+</body></html>

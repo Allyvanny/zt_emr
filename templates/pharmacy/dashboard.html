@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block title %}Pharmacy{% endblock %}{% block page_title %}Pharmacy Dashboard{% endblock %}{% block page_sub %}Drug dispensing & inventory management{% endblock %}
+{% block content %}
+{% if my_risk %}<div class="risk-banner risk-{{ my_risk.level }}"><div class="risk-banner-left"><span class="risk-icon">{% if my_risk.level=='low' %}✅{% elif my_risk.level=='medium' %}⚠️{% else %}🚨{% endif %}</span><div><strong>Risk Level: {{ my_risk.level|upper }}</strong><p>{{ my_risk.reason }}</p></div></div></div>{% endif %}
+<div class="stats-grid">
+  <div class="stat-card c-ambera"><div class="stat-icon si-amber">⏳</div><div><div class="stat-label">Pending RX</div><div class="stat-value">{{ pending }}</div></div></div>
+  <div class="stat-card c-greena"><div class="stat-icon si-green">✅</div><div><div class="stat-label">Dispensed Today</div><div class="stat-value">{{ dispensed }}</div></div></div>
+  <div class="stat-card c-cyana"><div class="stat-icon si-cyan">💊</div><div><div class="stat-label">Total Drugs</div><div class="stat-value">{{ total_drugs }}</div></div></div>
+  <div class="stat-card c-reda"><div class="stat-icon si-red">⚠️</div><div><div class="stat-label">Low Stock</div><div class="stat-value">{{ low_stock }}</div><div class="stat-sub">{{ out_of_stock }} out of stock</div></div></div>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><h3>📋 Pending Prescriptions</h3><a href="{{ url_for('pharmacy.prescription_list') }}" class="link-more">View all →</a></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>RX No</th><th>Patient</th><th>Prescribed By</th><th>Date</th><th></th></tr></thead><tbody>
+    {% for rx in recent_rx %}{% if rx.status=='pending' %}<tr><td><code>{{ rx.prescription_no }}</code></td><td><strong style="color:var(--tx-1)">{{ rx.patient.full_name }}</strong></td><td>{{ rx.prescriber.full_name if rx.prescriber else '—' }}</td><td>{{ rx.created_at|eat('%d %b %H:%M') }}</td><td><a href="{{ url_for('pharmacy.view_prescription',rx_id=rx.id) }}" class="btn btn-primary btn-xs">Dispense</a></td></tr>{% endif %}{% else %}<tr><td colspan="5" class="empty-row">No pending prescriptions.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3>⚠️ Low Stock Alert</h3><a href="{{ url_for('pharmacy.drug_list') }}" class="link-more">View all →</a></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>Drug</th><th>Category</th><th>Stock</th><th>Status</th></tr></thead><tbody>
+    {% for d in low_drugs %}<tr><td><strong style="color:var(--tx-1)">{{ d.name }}</strong><br><span style="font-size:11px;color:var(--tx-3)">{{ d.generic_name }}</span></td><td>{{ d.category }}</td>
+    <td><div class="stock-indicator"><div class="stock-bar"><div class="stock-fill {{ 'stock-out' if d.is_out_of_stock else 'stock-low' }}" style="width:{{ [((d.stock_qty/d.reorder_level)*100)|round|int,100]|min }}%"></div></div>{{ d.stock_qty }} {{ d.unit }}</div></td>
+    <td>{% if d.is_out_of_stock %}<span class="badge badge-danger">Out of Stock</span>{% else %}<span class="badge badge-warning">Low Stock</span>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="4" class="empty-row">All drugs adequately stocked.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </div>
+</div>
+{% endblock %}

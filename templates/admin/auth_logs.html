@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block title %}Auth Logs{% endblock %}{% block page_title %}Authentication Logs{% endblock %}{% block page_sub %}Login, logout, OTP, lockout events{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Authentication Logs</h2></div></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>#</th><th>Username</th><th>Event</th><th>IP Address</th><th>Result</th><th>Timestamp</th><th>Details</th></tr></thead>
+<tbody>{% for l in logs.items %}<tr>
+<td class="text-muted">{{ l.id }}</td><td><code>{{ l.username or '—' }}</code></td>
+<td><span class="badge badge-event-{{ l.event_type }}">{{ l.event_type|replace('_',' ') }}</span></td>
+<td><code>{{ l.ip_address or '—' }}</code></td>
+<td>{% if l.success %}<span class="badge badge-success">Success</span>{% else %}<span class="badge badge-danger">Failed</span>{% endif %}</td>
+<td class="mono">{{ l.timestamp|eat('%d %b %Y %H:%M:%S') }}</td>
+<td class="log-details">{{ l.details or '—' }}</td>
+</tr>{% else %}<tr><td colspan="7" class="empty-row">No auth logs.</td></tr>{% endfor %}</tbody>
+</table></div>
+<div class="pagination">{% if logs.has_prev %}<a href="{{ url_for('admin.auth_logs',page=logs.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}<span>Page {{ logs.page }} of {{ logs.pages }}</span>{% if logs.has_next %}<a href="{{ url_for('admin.auth_logs',page=logs.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}</div></div>{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}{% block title %}New Lab Request{% endblock %}{% block page_title %}Order Lab Tests{% endblock %}{% block page_sub %}Request laboratory investigations{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Order Lab Tests</h2><p class="page-sub">Select patient and tests to request</p></div></div>
+<div class="form-card"><form method="POST" action="{{ url_for('laboratory.new_request') }}">
+  <div class="form-section"><p class="form-section-title">👤 Patient & Request Details</p>
+    <div class="form-row">
+      <div class="form-group"><label>Patient <span class="required">*</span></label>
+        <select name="patient_id" required><option value="">— Select patient —</option>
+        {% for p in patients %}<option value="{{ p.id }}">{{ p.full_name }} ({{ p.patient_id }})</option>{% endfor %}</select>
+      </div>
+      <div class="form-group"><label>Priority <span class="required">*</span></label>
+        <select name="priority"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="stat">STAT (Immediate)</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Specimen Type</label>
+        <select name="specimen_type"><option>Blood</option><option>Urine</option><option>Stool</option><option>Sputum</option><option>CSF</option><option>Swab</option><option>Tissue</option><option>Other</option></select>
+      </div>
+      <div class="form-group"><label>Test Category</label>
+        <select name="test_category">{% for cat in test_categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    <div class="form-group"><label>Clinical Notes</label><textarea name="clinical_notes" rows="2" placeholder="Clinical history and reason for investigation…"></textarea></div>
+  </div>
+  <div class="form-section"><p class="form-section-title">🧪 Select Tests</p>
+    {% for category, tests in test_categories.items() %}
+    <div style="margin-bottom:1.25rem">
+      <p style="font-size:12px;font-weight:700;color:var(--tx-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">{{ category }}</p>
+      <div class="test-grid">
+        {% for test in tests %}
+        <label class="test-item"><input type="checkbox" name="tests" value="{{ test }}"><span>{{ test }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-actions"><a href="{{ url_for('laboratory.request_list') }}" class="btn btn-ghost">Cancel</a><button type="submit" class="btn btn-primary">✓ Submit Lab Request</button></div>
+</form></div>{% endblock %}

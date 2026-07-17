@@ -1,0 +1,71 @@
+{% extends "patient_portal/base.html" %}
+{% block title %}{{ t('my_dashboard') }}{% endblock %}
+{% block page_title %}{{ t('my_dashboard') }}{% endblock %}
+{% block page_sub %}{{ t('welcome_back', name=current_user.full_name) }}{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div style="background:linear-gradient(135deg,#00d4d4,#7c5cbf);border-radius:16px;padding:1.5rem 2rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+  <div>
+    <h2 style="color:#fff;font-size:1.3rem;font-weight:800">{{ t('hello_wave', name=current_user.full_name) }}</h2>
+    <p style="color:rgba(255,255,255,.8);font-size:13px;margin-top:4px">
+      {% if doctor %}{{ t('your_doctor') }} <strong style="color:#fff">{{ doctor.full_name }}</strong>{% else %}{{ t('welcome_to_portal') }}{% endif %}
+      &nbsp;·&nbsp; {{ t('last_login') }} {{ current_user.last_login|eat if current_user.last_login else t('first_visit') }}
+    </p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="{{ url_for('patient_portal.send_message') }}" class="btn" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)">{{ t('message_doctor_btn') }}</a>
+    <a href="{{ url_for('patient_portal.request_appointment') }}" class="btn" style="background:#fff;color:#00b8b8;border-color:#fff">{{ t('request_appointment_btn') }}</a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon si-teal">💬</div>
+    <div><div class="stat-label">{{ t('stat_messages') }}</div><div class="stat-value">{{ total_messages }}</div>
+    {% if unread > 0 %}<div style="font-size:11px;color:#e8445a;font-weight:600;margin-top:2px">{{ unread }} {{ t('stat_unread') }}</div>{% endif %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon si-violet">📅</div>
+    <div><div class="stat-label">{{ t('stat_appointments') }}</div><div class="stat-value">{{ total_requests }}</div>
+    {% if pending_requests > 0 %}<div style="font-size:11px;color:#f5a623;font-weight:600;margin-top:2px">{{ pending_requests }} {{ t('stat_pending') }}</div>{% endif %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon si-green">📋</div>
+    <div><div class="stat-label">{{ t('stat_health_records') }}</div><div class="stat-value">{{ records|length }}</div>
+    {% if not current_user.patient_id %}<div style="font-size:10px;color:#b0c4ce;margin-top:2px">{{ t('not_yet_linked') }}</div>{% endif %}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon si-amber">💊</div>
+    <div><div class="stat-label">{{ t('stat_prescriptions') }}</div><div class="stat-value">{{ prescriptions|length }}</div></div>
+  </div>
+</div>
+
+
+
+<!-- Recent Health Records -->
+{% if records %}
+<div class="card">
+  <div class="card-header">
+    <h3>{{ t('recent_health_records') }}</h3>
+    <a href="{{ url_for('patient_portal.my_health') }}" class="link-action">{{ t('view_all') }}</a>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>{{ t('th_date') }}</th><th>{{ t('th_doctor') }}</th><th>{{ t('th_diagnosis') }}</th><th>{{ t('th_treatment') }}</th></tr></thead>
+      <tbody>
+      {% for rec in records %}
+      <tr>
+        <td style="font-size:12px;font-weight:600">{{ rec.visit_date|eat_date }}</td>
+        <td style="font-size:12px">{{ rec.doctor.full_name if rec.doctor else '—' }}</td>
+        <td><span class="badge" style="background:rgba(0,212,212,.1);color:#007a7a;border:none">{{ rec.diagnosis or '—' }}</span></td>
+        <td style="font-size:12px;color:#7a95a8;max-width:200px">{{ rec.treatment[:60] if rec.treatment else '—' }}{% if rec.treatment and rec.treatment|length > 60 %}…{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

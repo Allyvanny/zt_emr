@@ -1,0 +1,45 @@
+{% extends "base.html" %}{% block title %}Add Record{% endblock %}{% block page_title %}Add Medical Record{% endblock %}{% block page_sub %}{{ patient.full_name }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('patients.view_patient',patient_id=patient.id) }}" class="breadcrumb">← {{ patient.full_name }}</a><h2>Add Medical Record</h2></div></div>
+
+{% set active_allergies = patient.allergies|selectattr('status','equalto','active')|list if patient.allergies else [] %}
+{% if active_allergies %}
+<div style="background:linear-gradient(135deg,rgba(232,68,90,.08),rgba(232,68,90,.04));border:1.5px solid rgba(232,68,90,.3);border-radius:12px;padding:12px 16px;margin-bottom:1rem;display:flex;align-items:flex-start;gap:10px">
+  <span style="font-size:1.3rem;flex-shrink:0">🚨</span>
+  <div style="flex:1">
+    <p style="font-size:12px;font-weight:700;color:#b91c1c;margin-bottom:4px">ALLERGY ALERT — Review before prescribing</p>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">
+      {% for a in active_allergies %}
+      <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:16px;font-size:10px;font-weight:600;{% if a.severity in ['severe','life-threatening'] %}background:rgba(232,68,90,.15);color:#b91c1c{% elif a.severity == 'moderate' %}background:rgba(245,166,35,.15);color:#92400e{% else %}background:rgba(107,114,128,.1);color:#374151{% endif %}">
+        {{ a.allergen }}{% if a.reaction %} ({{ a.reaction }}){% endif %} — {{ a.severity|upper }}
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="form-card"><form method="POST" action="{{ url_for('patients.add_record',patient_id=patient.id) }}">
+  <div class="form-section"><p class="form-section-title">🩺 Clinical Information</p>
+    <div class="form-group"><label>Symptoms</label><textarea name="symptoms" rows="2" placeholder="Describe symptoms…"></textarea></div>
+    <div class="form-group"><label>Diagnosis <span class="required">*</span></label><input type="text" name="diagnosis" placeholder="Primary diagnosis" required></div>
+    <div class="form-row"><div class="form-group"><label>Treatment Plan</label><textarea name="treatment" rows="2" placeholder="Treatment plan…"></textarea></div>
+    <div class="form-group"><label>Notes</label><textarea name="notes" rows="2" placeholder="Additional notes…"></textarea></div></div>
+  </div>
+  <div class="form-section"><p class="form-section-title">💊 Prescription (auto-creates pharmacy request)</p>
+    <div class="form-group"><label>Prescription Details</label><textarea name="prescription" rows="2" placeholder="Medications prescribed…"></textarea></div>
+  </div>
+  <div class="form-section"><p class="form-section-title">🔬 Lab Tests (auto-creates lab requests)</p>
+    <div class="form-group"><label>Order Lab Tests</label>
+      <div class="test-grid">
+        {% for test in ['Full Blood Count','Malaria RDT','Blood Glucose','HbA1c','HIV Rapid Test','Urinalysis','Hepatitis B','Widal Test','CD4 Count','Urine C&S','Blood Culture','Lipid Profile','LFTs','RFTs','Sputum AFB'] %}
+        <label class="test-item"><input type="checkbox" name="lab_tests" value="{{ test }}"><span>{{ test }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="form-group"><label>Lab Results (from previous)</label><textarea name="lab_results" rows="2" placeholder="Previous lab results…"></textarea></div>
+  </div>
+  <div class="form-group checkbox-group"><label><input type="checkbox" name="is_confidential"> Mark as Confidential</label></div>
+  <div class="form-actions"><a href="{{ url_for('patients.view_patient',patient_id=patient.id) }}" class="btn btn-ghost">Cancel</a><button type="submit" class="btn btn-primary">✓ Save Record</button></div>
+</form></div>
+{% endblock %}

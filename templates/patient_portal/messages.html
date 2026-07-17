@@ -1,0 +1,96 @@
+{% extends "patient_portal/base.html" %}
+{% block title %}{{ t('page_messages') }}{% endblock %}
+{% block page_title %}{{ t('page_messages') }}{% endblock %}
+{% block page_sub %}{{ t('msg_subtitle') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h2>{{ t('page_messages') }}</h2><p class="page-sub">{{ t('received_sent_count', recv=inbox|length, sent=sent|length) }}</p></div>
+  <a href="{{ url_for('patient_portal.send_message') }}" class="btn btn-primary">{{ t('nav_new_message') }}</a>
+</div>
+
+<!-- Tabs -->
+<div style="display:flex;gap:4px;margin-bottom:1.25rem;background:#fff;padding:6px;border-radius:12px;border:1px solid rgba(0,212,212,.12);width:fit-content">
+  <button onclick="showTab('inbox')" id="tab-inbox" style="padding:8px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+    {{ t('tab_inbox') }} {% if inbox|selectattr('is_read','equalto',false)|list|length > 0 %}<span style="background:rgba(255,255,255,.3);padding:1px 7px;border-radius:100px;font-size:10px">{{ inbox|selectattr('is_read','equalto',false)|list|length }}</span>{% endif %}
+  </button>
+  <button onclick="showTab('sent')" id="tab-sent" style="padding:8px 20px;border-radius:8px;border:none;background:transparent;color:#7a95a8;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">
+    {{ t('tab_sent') }} ({{ sent|length }})
+  </button>
+</div>
+
+<!-- Inbox -->
+<div id="pane-inbox">
+  <div class="card" style="margin-bottom:0">
+    {% if inbox %}
+    {% for msg in inbox %}
+    <a href="{{ url_for('patient_portal.view_message', msg_id=msg.id) }}" class="msg-item {{ 'unread' if not msg.is_read }}" style="display:flex">
+      <div class="msg-av">{{ msg.sender_name[0] }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span class="msg-from">{{ msg.sender_name }}</span>
+          {% if not msg.is_read %}<span class="badge-unread">NEW</span>{% endif %}
+          <span class="badge badge-{{ msg.message_type }}" style="font-size:10px">{{ msg.message_type|replace('_',' ')|title }}</span>
+        </div>
+        <div class="msg-subject">{{ msg.type_icon }} {{ msg.subject }}</div>
+        <div class="msg-preview">{{ msg.body[:100] }}{% if msg.body|length > 100 %}…{% endif %}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:12px">
+        <div class="msg-time">{{ msg.created_at|eat_date }}</div>
+        <div style="font-size:10px;color:#b0c4ce;margin-top:2px">{{ msg.created_at|eat_time }}</div>
+      </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div style="padding:3rem;text-align:center;color:#b0c4ce">
+      <div style="font-size:3rem;margin-bottom:10px">📭</div>
+      <p style="font-size:14px;font-weight:600;color:#7a95a8">{{ t('inbox_empty') }}</p>
+      <p style="font-size:12px;margin-top:4px">{{ t('inbox_empty_sub') }}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Sent -->
+<div id="pane-sent" style="display:none">
+  <div class="card" style="margin-bottom:0">
+    {% if sent %}
+    {% for msg in sent %}
+    <div class="msg-item" style="display:flex">
+      <div class="msg-av" style="background:linear-gradient(135deg,#00c896,#00d4d4)">{{ current_user.full_name[0] }}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span class="msg-from">{{ t('to_label') }} {{ msg.receiver_staff.full_name if msg.receiver_staff else '—' }}</span>
+          <span class="badge badge-{{ msg.message_type }}" style="font-size:10px">{{ msg.message_type|replace('_',' ')|title }}</span>
+        </div>
+        <div class="msg-subject">{{ msg.type_icon }} {{ msg.subject }}</div>
+        <div class="msg-preview">{{ msg.body[:100] }}{% if msg.body|length > 100 %}…{% endif %}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:12px">
+        <div class="msg-time">{{ msg.created_at|eat_date }}</div>
+        <div style="font-size:10px;color:#b0c4ce;margin-top:2px">{{ msg.created_at|eat_time }}</div>
+        <div style="font-size:10px;margin-top:3px">{% if msg.is_read %}<span style="color:#00c896">{{ t('read_label') }}</span>{% else %}<span style="color:#b0c4ce">{{ t('unread_label') }}</span>{% endif %}</div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="padding:3rem;text-align:center;color:#b0c4ce">
+      <div style="font-size:3rem;margin-bottom:10px">📤</div>
+      <p>{{ t('no_sent_yet') }}</p>
+      <a href="{{ url_for('patient_portal.send_message') }}" class="btn btn-primary btn-sm" style="margin-top:.75rem">{{ t('send_a_message') }}</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function showTab(tab){
+  document.getElementById('pane-inbox').style.display=tab==='inbox'?'block':'none';
+  document.getElementById('pane-sent').style.display=tab==='sent'?'block':'none';
+  document.getElementById('tab-inbox').style.background=tab==='inbox'?'linear-gradient(135deg,#00d4d4,#7c5cbf)':'transparent';
+  document.getElementById('tab-inbox').style.color=tab==='inbox'?'#fff':'#7a95a8';
+  document.getElementById('tab-sent').style.background=tab==='sent'?'linear-gradient(135deg,#00d4d4,#7c5cbf)':'transparent';
+  document.getElementById('tab-sent').style.color=tab==='sent'?'#fff':'#7a95a8';
+}
+</script>
+{% endblock %}

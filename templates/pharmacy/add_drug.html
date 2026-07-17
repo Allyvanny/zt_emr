@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block title %}Add Drug{% endblock %}{% block page_title %}Add Drug{% endblock %}{% block page_sub %}Add new drug to inventory{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('pharmacy.drug_list') }}" class="breadcrumb">← Drug Inventory</a><h2>Add New Drug</h2></div></div>
+<div class="form-card form-card-narrow"><form method="POST" action="{{ url_for('pharmacy.add_drug') }}">
+  <div class="form-row"><div class="form-group"><label>Drug Name <span class="required">*</span></label><input type="text" name="name" required placeholder="e.g. Artemether-Lumefantrine"></div>
+  <div class="form-group"><label>Generic Name</label><input type="text" name="generic_name" placeholder="Generic/INN name"></div></div>
+  <div class="form-row"><div class="form-group"><label>Category</label><select name="category"><option>Antimalarial</option><option>Antibiotic</option><option>Antihypertensive</option><option>Antidiabetic</option><option>Analgesic</option><option>Antituberculosis</option><option>ARV</option><option>Antifungal</option><option>IV Fluid</option><option>Supplement</option><option>Other</option></select></div>
+  <div class="form-group"><label>Unit</label><select name="unit"><option>Tablets</option><option>Capsules</option><option>mL</option><option>Vials</option><option>Sachets</option><option>Tubes</option></select></div></div>
+  <div class="form-row"><div class="form-group"><label>Initial Stock Qty</label><input type="number" name="stock_qty" value="0" min="0"></div>
+  <div class="form-group"><label>Reorder Level</label><input type="number" name="reorder_level" value="50" min="0"></div></div>
+  <div class="form-row"><div class="form-group"><label>Unit Price (TZS)</label><input type="number" name="unit_price" value="0" step="0.01" min="0"></div>
+  <div class="form-group"><label>Expiry Date</label><input type="date" name="expiry_date"></div></div>
+  <div class="form-actions"><a href="{{ url_for('pharmacy.drug_list') }}" class="btn btn-ghost">Cancel</a><button type="submit" class="btn btn-primary">✓ Add to Inventory</button></div>
+</form></div>
+{% endblock %}

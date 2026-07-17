@@ -1,0 +1,55 @@
+{% extends "base.html" %}{% block title %}Prescription {{ rx.prescription_no }}{% endblock %}{% block page_title %}Prescription{% endblock %}{% block page_sub %}{{ rx.prescription_no }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('pharmacy.prescription_list') }}" class="breadcrumb">← Prescriptions</a><h2>{{ rx.prescription_no }}</h2></div>
+<div class="header-actions">
+  <a href="{{ url_for('pharmacy.print_prescription',rx_id=rx.id) }}" target="_blank" class="btn btn-ghost btn-sm">🖨️ Print</a>
+  {% if rx.status=='pending' %}
+  <form method="POST" action="{{ url_for('pharmacy.cancel_prescription',rx_id=rx.id) }}"><button type="submit" class="btn btn-danger btn-sm">Cancel</button></form>
+  {% endif %}
+</div></div>
+<div class="grid-2">
+<div class="card card-body">
+  <p class="form-section-title">Patient & Prescription Info</p>
+  <div class="info-grid">
+    <div class="info-row"><span class="info-label">Patient</span><span class="info-value"><strong>{{ rx.patient.full_name if rx.patient else '—' }}</strong></span></div>
+    <div class="info-row"><span class="info-label">Patient ID</span><span class="info-value"><code>{{ rx.patient.patient_id if rx.patient else '—' }}</code></span></div>
+    <div class="info-row"><span class="info-label">Prescribed By</span><span class="info-value">{{ rx.prescriber.full_name if rx.prescriber else '—' }}</span></div>
+    <div class="info-row"><span class="info-label">Status</span><span class="info-value"><span class="badge badge-{{ rx.status }}">{{ rx.status }}</span></span></div>
+    <div class="info-row"><span class="info-label">Created</span><span class="info-value">{{ rx.created_at|eat }}</span></div>
+    {% if rx.notes %}<div class="info-row"><span class="info-label">Notes</span><span class="info-value">{{ rx.notes }}</span></div>{% endif %}
+  </div>
+</div>
+{% if rx.status=='pending' %}
+<div class="card card-body">
+  <p class="form-section-title">💊 Dispense Drugs</p>
+  <form method="POST" action="{{ url_for('pharmacy.dispense',rx_id=rx.id) }}">
+    <div id="drug-items">
+      <div class="drug-item" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;gap:8px;margin-bottom:8px;align-items:end">
+        <div><label class="form-group" style="display:block;font-size:10px;font-weight:700;color:var(--tx-3);text-transform:uppercase;margin-bottom:4px">Drug</label><select name="drug_id" style="width:100%;padding:8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--tx-1);font-size:12px"><option value="">— Select drug —</option>{% for d in drugs %}<option value="{{ d.id }}">{{ d.name }} ({{ d.stock_qty }} {{ d.unit }})</option>{% endfor %}</select></div>
+        <div><label style="display:block;font-size:10px;font-weight:700;color:var(--tx-3);text-transform:uppercase;margin-bottom:4px">Dosage</label><input type="text" name="dosage" placeholder="e.g. 500mg" style="width:100%;padding:8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--tx-1);font-size:12px"></div>
+        <div><label style="display:block;font-size:10px;font-weight:700;color:var(--tx-3);text-transform:uppercase;margin-bottom:4px">Frequency</label><input type="text" name="frequency" placeholder="e.g. TID" style="width:100%;padding:8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--tx-1);font-size:12px"></div>
+        <div><label style="display:block;font-size:10px;font-weight:700;color:var(--tx-3);text-transform:uppercase;margin-bottom:4px">Duration</label><input type="text" name="duration" placeholder="e.g. 7 days" style="width:100%;padding:8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--tx-1);font-size:12px"></div>
+        <div><label style="display:block;font-size:10px;font-weight:700;color:var(--tx-3);text-transform:uppercase;margin-bottom:4px">Qty</label><input type="number" name="quantity" value="1" min="1" style="width:100%;padding:8px;background:var(--bg-card2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--tx-1);font-size:12px"></div>
+      </div>
+    </div>
+    <button type="button" onclick="addDrugRow()" class="btn btn-ghost btn-sm" style="margin-bottom:1rem">+ Add another drug</button>
+    <div style="border-top:1px solid var(--border-2);padding-top:1rem"><button type="submit" class="btn btn-success btn-full">✓ Confirm Dispensing</button></div>
+  </form>
+</div>
+{% else %}
+<div class="card card-body">
+  <p class="form-section-title">Dispensed Items</p>
+  {% for item in rx.items %}<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-2)"><div><strong style="color:var(--tx-1)">{{ item.drug.name }}</strong><br><span style="font-size:12px;color:var(--tx-3)">{{ item.dosage }} — {{ item.frequency }} — {{ item.duration }}</span></div><span style="color:var(--tx-2)">{{ item.dispensed_qty }} {{ item.drug.unit }}</span></div>{% else %}<p style="color:var(--tx-4);font-size:13px">No items recorded.</p>{% endfor %}
+  {% if rx.dispenser %}<p style="margin-top:1rem;font-size:12px;color:var(--tx-3)">Dispensed by {{ rx.dispenser.full_name }} on {{ rx.dispensed_at|eat if rx.dispensed_at }}</p>{% endif %}
+</div>
+{% endif %}
+</div>
+<script>
+function addDrugRow(){
+  const tmpl=document.querySelector('.drug-item').cloneNode(true);
+  tmpl.querySelectorAll('input').forEach(i=>i.value='');
+  tmpl.querySelector('select').value='';
+  document.getElementById('drug-items').appendChild(tmpl);
+}
+</script>
+{% endblock %}

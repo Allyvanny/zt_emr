@@ -1,0 +1,44 @@
+{% extends "patient_portal/base.html" %}
+{% block title %}{{ msg.subject }}{% endblock %}
+{% block page_title %}{{ t('message_word') }}{% endblock %}
+{% block page_sub %}{{ msg.subject }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><a href="{{ url_for('patient_portal.messages') }}" class="breadcrumb">{{ t('breadcrumb_messages') }}</a><h2>{{ msg.subject }}</h2></div>
+  <a href="{{ url_for('patient_portal.send_message') }}?reply_to={{ msg.id }}" class="btn btn-secondary btn-sm">{{ t('reply_btn') }}</a>
+</div>
+<div class="card">
+  <div style="padding:1.25rem;border-bottom:1px solid rgba(0,212,212,.08)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <div class="msg-av" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0">{{ msg.sender_name[0] }}</div>
+      <div>
+        <p style="font-weight:700;font-size:14px;color:#1a2332">{{ msg.sender_name }}</p>
+        <p style="font-size:12px;color:#b0c4ce">{{ msg.created_at|eat_datetime }}</p>
+      </div>
+      <div style="margin-left:auto">
+        <span class="badge badge-{{ msg.message_type }}">{{ msg.type_icon }} {{ msg.message_type|replace('_',' ')|title }}</span>
+      </div>
+    </div>
+    <div style="background:#f4fbfc;border-radius:12px;padding:1.25rem;font-size:14px;color:#1a2332;line-height:1.7;border:1px solid rgba(0,212,212,.1)">
+      {{ msg.body|replace('\n','<br>')|safe }}
+    </div>
+  </div>
+  {% if msg.replies %}
+  <div style="padding:1rem 1.25rem;border-bottom:1px solid rgba(0,212,212,.08)">
+    <p style="font-size:11px;font-weight:700;color:#7a95a8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem">{{ t('replies_count', n=msg.replies|length) }}</p>
+    {% for reply in msg.replies %}
+    <div style="display:flex;gap:10px;margin-bottom:.75rem">
+      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00c896,#00d4d4);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">{{ reply.sender_name[0] }}</div>
+      <div style="flex:1;background:#f4fbfc;border-radius:10px;padding:10px 14px;border:1px solid rgba(0,212,212,.1)">
+        <p style="font-size:12px;font-weight:700;color:#1a2332;margin-bottom:4px">{{ reply.sender_name }} <span style="font-weight:400;color:#b0c4ce">· {{ reply.created_at|eat('%d %b %H:%M') }}</span></p>
+        <p style="font-size:13px;color:#3d5166;line-height:1.6">{{ reply.body }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div style="padding:1.25rem">
+    <a href="{{ url_for('patient_portal.send_message') }}?reply_to={{ msg.id }}" class="btn btn-primary btn-sm">{{ t('reply_to_message') }}</a>
+  </div>
+</div>
+{% endblock %}

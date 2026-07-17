@@ -1,0 +1,39 @@
+{% extends "base.html" %}{% block title %}Enter Result{% endblock %}{% block page_title %}Enter Lab Result{% endblock %}{% block page_sub %}{{ req.request_no }} — {{ req.test_type }}{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('laboratory.view_request',rid=req.id) }}" class="breadcrumb">← {{ req.request_no }}</a><h2>Enter Lab Result</h2><p class="page-sub">{{ req.test_type }} — {{ req.patient.full_name if req.patient else '—' }}</p></div></div>
+<div class="grid-2">
+<div class="card card-body" style="height:fit-content">
+  <p class="form-section-title">Request Summary</p>
+  <div class="info-grid">
+    <div class="info-row"><span class="info-label">Patient</span><span class="info-value"><strong style="color:var(--tx-1)">{{ req.patient.full_name if req.patient else '—' }}</strong></span></div>
+    <div class="info-row"><span class="info-label">Test</span><span class="info-value">{{ req.test_type }}</span></div>
+    <div class="info-row"><span class="info-label">Category</span><span class="info-value">{{ req.test_category }}</span></div>
+    <div class="info-row"><span class="info-label">Priority</span><span class="info-value"><span class="badge badge-{{ req.priority }}">{{ req.priority }}</span></span></div>
+    <div class="info-row"><span class="info-label">Specimen</span><span class="info-value">{{ req.specimen_type }}</span></div>
+    {% if req.clinical_notes %}<div class="info-row"><span class="info-label">Clinical Notes</span><span class="info-value">{{ req.clinical_notes }}</span></div>{% endif %}
+  </div>
+</div>
+<div class="form-card" style="margin-bottom:0">
+  <form method="POST" action="{{ url_for('laboratory.enter_result',rid=req.id) }}">
+    <div class="form-section"><p class="form-section-title">📊 Result Data</p>
+      <div class="form-group"><label>Result <span class="required">*</span></label>
+        <textarea name="result_data" rows="5" required placeholder="Enter result values, e.g:&#10;Hgb: 11.2 g/dL&#10;WBC: 8.4 x10⁹/L&#10;Platelets: 220 x10⁹/L"></textarea>
+      </div>
+      <div class="form-group"><label>Reference Range</label>
+        <textarea name="reference_range" rows="3" placeholder="Normal reference values for this test…"></textarea>
+      </div>
+      <div class="form-group"><label>Interpretation <span class="required">*</span></label>
+        <select name="interpretation" required>
+          <option value="normal">Normal</option>
+          <option value="abnormal">Abnormal</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Comments / Remarks</label>
+        <textarea name="comments" rows="2" placeholder="Additional comments or clinical remarks…"></textarea>
+      </div>
+    </div>
+    <div class="form-actions"><a href="{{ url_for('laboratory.view_request',rid=req.id) }}" class="btn btn-ghost">Cancel</a><button type="submit" class="btn btn-primary">✓ Save Result</button></div>
+  </form>
+</div>
+</div>{% endblock %}

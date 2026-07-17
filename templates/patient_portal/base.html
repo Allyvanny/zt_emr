@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{% block title %}My Health Portal{% endblock %} — ZT EMR</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f0f7f8;min-height:100vh;color:#1a2332;-webkit-font-smoothing:antialiased}
+
+/* SIDEBAR — mobile-first: hidden off-canvas by default, slides in as a drawer */
+.sidebar{position:fixed;top:0;left:0;width:250px;max-width:82vw;height:100vh;height:100dvh;background:#fff;border-right:1px solid rgba(0,212,212,.15);display:flex;flex-direction:column;z-index:220;overflow-y:auto;box-shadow:4px 0 20px rgba(0,180,180,.06);transform:translateX(-100%);transition:transform .25s ease}
+.sidebar.open{transform:translateX(0);box-shadow:8px 0 32px rgba(0,20,30,.18)}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(8,16,26,.45);z-index:210;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.sidebar-overlay.show{opacity:1;pointer-events:auto}
+.sidebar-close{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:rgba(0,212,212,.08);border:none;color:#7a95a8;font-size:16px;cursor:pointer;margin-left:auto}
+.brand{padding:20px 18px 16px;border-bottom:1px solid rgba(0,212,212,.1)}
+.brand-logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#00d4d4,#7c5cbf);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(0,212,212,.3)}
+.brand-row{display:flex;align-items:center;gap:10px}
+.brand-name{font-size:14px;font-weight:800;color:#1a2332}
+.brand-sub{font-size:10px;color:#b0c4ce;margin-top:2px}
+
+.nav-section{padding:12px 10px 4px}
+.nav-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#c8d8e0;padding:0 8px;margin-bottom:6px}
+.nav-list{list-style:none}
+.nav-list li{margin-bottom:2px}
+.nav-list a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:#5a7a8a;text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all .15s;position:relative}
+.nav-list a:hover{background:rgba(0,212,212,.08);color:#00a0a0}
+.nav-list a.active{background:linear-gradient(90deg,rgba(0,212,212,.12),rgba(124,92,191,.06));color:#00b8b8;font-weight:700}
+.nav-list a.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:linear-gradient(#00d4d4,#7c5cbf);border-radius:0 3px 3px 0}
+.nav-icon{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:#e8445a;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:100px;min-width:18px;text-align:center}
+
+.sidebar-footer{margin-top:auto;padding:12px 10px calc(12px + env(safe-area-inset-bottom));border-top:1px solid rgba(0,212,212,.08);flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f4fbfc;border-radius:10px;border:1px solid rgba(0,212,212,.1);margin-bottom:8px}
+.user-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.user-name{font-size:12px;font-weight:700;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.user-role{font-size:10px;color:#b0c4ce}
+.btn-logout{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:8px;border-radius:10px;background:rgba(232,68,90,.06);color:#e8445a;border:1px solid rgba(232,68,90,.15);font-size:12px;font-weight:600;text-decoration:none;transition:all .15s}
+.btn-logout:hover{background:#e8445a;color:#fff}
+
+/* MAIN */
+.layout{margin-left:0;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:56px;background:#fff;border-bottom:1px solid rgba(0,212,212,.12);display:flex;align-items:center;padding:0 .9rem;gap:.6rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,180,180,.06)}
+.hamburger{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;border:none;background:rgba(0,212,212,.08);border-radius:9px;cursor:pointer;color:#1a2332;font-size:18px}
+.topbar-title{font-size:14px;font-weight:700;color:#1a2332;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-sub{font-size:10px;color:#b0c4ce;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.topbar-clock{display:none;font-family:monospace;font-size:12px;color:#00b8b8;background:rgba(0,212,212,.08);padding:4px 10px;border-radius:6px;border:1px solid rgba(0,212,212,.15)}
+.page-body{flex:1;padding:1rem}
+@media(min-width:640px){
+  .topbar{padding:0 1.25rem}
+  .topbar-title{font-size:15px}
+  .topbar-sub{font-size:11px}
+  .topbar-clock{display:inline-block}
+  .page-body{padding:1.5rem}
+}
+@media(min-width:960px){
+  .sidebar{transform:none;max-width:250px}
+  .sidebar-overlay{display:none}
+  .hamburger{display:none}
+  .layout{margin-left:250px}
+  .topbar{padding:0 1.75rem}
+  .topbar-title{font-size:16px}
+  .topbar-sub{font-size:11px}
+  .page-body{padding:1.75rem 2rem}
+}
+.footer{text-align:center;font-size:11px;color:#b0c4ce;padding:.85rem;border-top:1px solid rgba(0,212,212,.1);background:#fff}
+
+/* ALERTS */
+.alert{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;margin-bottom:1rem;font-size:13px;font-weight:500;border:1px solid;animation:slideDown .2s ease}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.alert-success{background:rgba(0,200,150,.08);border-color:rgba(0,200,150,.25);color:#007a5a}
+.alert-danger{background:rgba(232,68,90,.08);border-color:rgba(232,68,90,.25);color:#c0243a}
+.alert-warning{background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.25);color:#8a6200}
+.alert-info{background:rgba(0,212,212,.08);border-color:rgba(0,212,212,.25);color:#007a7a}
+
+/* CARDS */
+.card{background:#fff;border:1px solid rgba(0,212,212,.12);border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,180,180,.06);margin-bottom:1.25rem}
+.card-body{padding:1.25rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid rgba(0,212,212,.08)}
+.card-header h3{font-size:14px;font-weight:700;color:#1a2332}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:#fff;border:1px solid rgba(0,212,212,.12);border-radius:14px;padding:1.1rem;display:flex;align-items:center;gap:.85rem;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 8px rgba(0,180,180,.05);position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,212,212,.15)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#00d4d4,#7c5cbf)}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-teal{background:rgba(0,212,212,.1)}.si-violet{background:rgba(124,92,191,.1)}
+.si-green{background:rgba(0,200,150,.1)}.si-amber{background:rgba(245,166,35,.1)}
+.si-red{background:rgba(232,68,90,.1)}.si-blue{background:rgba(59,130,246,.1)}
+.stat-label{font-size:11px;font-weight:600;color:#7a95a8;text-transform:uppercase;letter-spacing:.05em}
+.stat-value{font-size:1.6rem;font-weight:800;color:#1a2332;line-height:1.1;margin-top:2px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;border:1px solid transparent;transition:all .15s;font-family:'Inter',sans-serif;white-space:nowrap}
+.btn-primary{background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;box-shadow:0 4px 12px rgba(0,212,212,.25)}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-secondary{background:#f4fbfc;color:#3d5166;border-color:rgba(0,212,212,.2)}
+.btn-secondary:hover{border-color:#00d4d4;color:#00b8b8}
+.btn-ghost{background:transparent;color:#7a95a8;border-color:rgba(0,212,212,.15)}
+.btn-ghost:hover{background:rgba(0,212,212,.06);color:#00b8b8}
+.btn-danger{background:rgba(232,68,90,.08);color:#e8445a;border-color:rgba(232,68,90,.2)}
+.btn-danger:hover{background:#e8445a;color:#fff}
+.btn-success{background:rgba(0,200,150,.1);color:#007a5a;border-color:rgba(0,200,150,.25)}
+.btn-success:hover{background:#00c896;color:#fff}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-full{width:100%;justify-content:center;padding:12px}
+
+/* FORMS */
+.form-card{background:#fff;border:1px solid rgba(0,212,212,.12);border-radius:16px;padding:1.75rem;max-width:700px;box-shadow:0 2px 12px rgba(0,180,180,.06)}
+.form-section-title{font-size:11px;font-weight:700;color:#00b8b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.85rem;padding-bottom:8px;border-bottom:2px solid rgba(0,212,212,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+.form-group{margin-bottom:.9rem}
+.form-group label{display:block;font-size:11px;font-weight:700;color:#3d5166;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;background:#f4fbfc;border:1.5px solid rgba(0,212,212,.18);border-radius:10px;font-size:13px;color:#1a2332;font-family:'Inter',sans-serif;transition:all .15s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#00d4d4;box-shadow:0 0 0 3px rgba(0,212,212,.1);background:#fff}
+.form-group textarea{resize:vertical;min-height:90px}
+.form-group select option{background:#fff}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:1rem;border-top:1px solid rgba(0,212,212,.08);margin-top:.5rem}
+.req{color:#e8445a}.form-hint{font-size:11px;color:#b0c4ce;margin-top:3px}
+
+/* TABLES */
+.table-wrap{overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{text-align:left;padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#7a95a8;background:#f4fbfc;border-bottom:2px solid rgba(0,212,212,.1);white-space:nowrap}
+.data-table td{padding:12px 14px;border-bottom:1px solid rgba(0,212,212,.06);font-size:13px;color:#3d5166;vertical-align:middle}
+.data-table tbody tr:hover td{background:rgba(0,212,212,.03)}
+.data-table tbody tr:last-child td{border-bottom:none}
+.empty-row{text-align:center;color:#b0c4ce;padding:2.5rem !important;font-size:13px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;white-space:nowrap}
+.badge-pending{background:rgba(245,166,35,.1);color:#8a6200;border:1px solid rgba(245,166,35,.25)}
+.badge-approved{background:rgba(0,200,150,.1);color:#007a5a;border:1px solid rgba(0,200,150,.25)}
+.badge-rejected{background:rgba(232,68,90,.1);color:#c0243a;border:1px solid rgba(232,68,90,.25)}
+.badge-completed{background:rgba(0,212,212,.1);color:#007a7a;border:1px solid rgba(0,212,212,.25)}
+.badge-cancelled{background:rgba(120,140,150,.1);color:#7a95a8;border:1px solid rgba(120,140,150,.2)}
+.badge-routine{background:rgba(120,140,150,.1);color:#7a95a8}
+.badge-urgent{background:rgba(245,166,35,.1);color:#8a6200}
+.badge-emergency{background:rgba(232,68,90,.1);color:#c0243a}
+.badge-unread{background:#e8445a;color:#fff;font-size:10px;padding:2px 7px;border-radius:100px;font-weight:700}
+.badge-general{background:rgba(0,212,212,.1);color:#007a7a}
+.badge-appointment_request{background:rgba(124,92,191,.1);color:#5a3e9a}
+.badge-medical_advice{background:rgba(59,130,246,.1);color:#1d4ed8}
+.badge-progress_update{background:rgba(0,200,150,.1);color:#007a5a}
+.badge-urgent-msg{background:rgba(232,68,90,.1);color:#c0243a}
+
+/* MESSAGE ITEM */
+.msg-item{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(0,212,212,.06);transition:background .1s;cursor:pointer;text-decoration:none}
+.msg-item:hover{background:rgba(0,212,212,.04)}
+.msg-item.unread{background:rgba(0,212,212,.04);border-left:3px solid #00d4d4}
+.msg-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.msg-from{font-size:13px;font-weight:700;color:#1a2332}
+.msg-subject{font-size:13px;color:#3d5166;font-weight:600}
+.msg-preview{font-size:12px;color:#b0c4ce;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px}
+.msg-time{font-size:11px;color:#b0c4ce;flex-shrink:0;margin-left:auto}
+.msg-type-icon{font-size:16px;margin-right:4px}
+
+/* HEALTH RECORD CARD */
+.rec-card{background:#fff;border:1px solid rgba(0,212,212,.12);border-radius:12px;margin-bottom:.85rem;overflow:hidden}
+.rec-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f4fbfc;border-bottom:1px solid rgba(0,212,212,.08);flex-wrap:wrap;gap:6px}
+.rec-body{padding:12px 14px}
+.rec-field{display:flex;gap:10px;margin-bottom:7px;font-size:13px}
+.rec-label{font-weight:700;color:#7a95a8;font-size:11px;min-width:100px;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em}
+
+/* PAGE HEADER */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.page-header h2{font-size:1.35rem;font-weight:800;color:#1a2332;letter-spacing:-.4px}
+.page-sub{font-size:12px;color:#b0c4ce;margin-top:3px}
+.breadcrumb{font-size:11px;color:#b0c4ce;text-decoration:none;display:block;margin-bottom:4px}
+.breadcrumb:hover{color:#00b8b8}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:1rem;font-size:13px;color:#7a95a8;border-top:1px solid rgba(0,212,212,.08)}
+
+code{background:rgba(0,212,212,.08);border:1px solid rgba(0,212,212,.15);padding:1px 7px;border-radius:4px;font-size:12px;font-family:monospace;color:#00b8b8}
+.text-muted{color:#b0c4ce;font-size:12px}
+.link-action{font-size:12px;color:#00b8b8;text-decoration:none;font-weight:500}
+.link-action:hover{text-decoration:underline}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:860px){.grid-2{grid-template-columns:1fr}}
+
+/* LANGUAGE SWITCH */
+.lang-switch{display:flex;background:#f4fbfc;border:1px solid rgba(0,212,212,.18);border-radius:100px;padding:2px;gap:2px;flex-shrink:0}
+.lang-switch a{padding:5px 8px;border-radius:100px;font-size:10px;font-weight:700;text-decoration:none;color:#7a95a8;transition:all .15s}
+.lang-switch a.active{background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff}
+.lang-switch a:not(.active):hover{color:#00b8b8}
+@media(min-width:640px){.lang-switch a{padding:5px 12px;font-size:11px}}
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-row">
+      <div class="brand-logo">🏥</div>
+      <div><div class="brand-name">{{ t('brand_name') }}</div><div class="brand-sub">Zero Trust EMR</div></div>
+      <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <p class="nav-label">{{ t('nav_section_my_health') }}</p>
+    <ul class="nav-list">
+      <li><a href="{{ url_for('patient_portal.dashboard') }}" {% if request.endpoint=='patient_portal.dashboard' %}class="active"{% endif %}><span class="nav-icon">🏠</span> {{ t('nav_dashboard') }}</a></li>
+      <li><a href="{{ url_for('patient_portal.my_health') }}" {% if request.endpoint=='patient_portal.my_health' %}class="active"{% endif %}><span class="nav-icon">📋</span> {{ t('nav_health_records') }}</a></li>
+      <li><a href="{{ url_for('patient_portal.appointment_requests') }}" {% if 'appointment' in (request.endpoint or '') %}class="active"{% endif %}><span class="nav-icon">📅</span> {{ t('nav_my_appointments') }}</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <p class="nav-label">{{ t('nav_section_comm') }}</p>
+    <ul class="nav-list">
+      <li>
+        <a href="{{ url_for('patient_portal.messages') }}" {% if request.endpoint in ['patient_portal.messages','patient_portal.view_message'] %}class="active"{% endif %}>
+          <span class="nav-icon">💬</span> {{ t('nav_messages') }}
+          {% set unread_count = namespace(n=0) %}
+          {# Unread badge will be injected via context #}
+          {% if unread_msgs_count is defined and unread_msgs_count > 0 %}
+          <span class="nav-badge">{{ unread_msgs_count }}</span>
+          {% endif %}
+        </a>
+      </li>
+      <li><a href="{{ url_for('patient_portal.send_message') }}" {% if request.endpoint=='patient_portal.send_message' %}class="active"{% endif %}><span class="nav-icon">✉️</span> {{ t('nav_new_message') }}</a></li>
+      <li><a href="{{ url_for('patient_portal.request_appointment') }}" {% if request.endpoint=='patient_portal.request_appointment' %}class="active"{% endif %}><span class="nav-icon">➕</span> {{ t('nav_request_appointment') }}</a></li>
+    </ul>
+  </div>
+
+  <div class="nav-section">
+    <p class="nav-label">{{ t('nav_section_account') }}</p>
+    <ul class="nav-list">
+      <li><a href="{{ url_for('patient_portal.profile') }}" {% if request.endpoint=='patient_portal.profile' %}class="active"{% endif %}><span class="nav-icon">👤</span> {{ t('nav_my_profile') }}</a></li>
+    </ul>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-av">{{ current_user.full_name[0] }}</div>
+      <div>
+        <div class="user-name">{{ current_user.full_name }}</div>
+        <div class="user-role">{{ t('patient_label') }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('patient_auth.logout') }}" class="btn-logout">⏻ {{ t('sign_out') }}</a>
+  </div>
+</aside>
+
+<div class="layout">
+  <div class="topbar">
+    <button class="hamburger" id="sidebar-toggle" aria-label="Open menu">☰</button>
+    <div style="min-width:0">
+      <div class="topbar-title">{% block page_title %}My Health Portal{% endblock %}</div>
+      <div class="topbar-sub">{% block page_sub %}Zero Trust EMR — MUST{% endblock %}</div>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-switch">
+        <a href="{{ url_for('patient_auth.set_language', lang='en') }}" class="{{ 'active' if current_lang=='en' }}">EN</a>
+        <a href="{{ url_for('patient_auth.set_language', lang='sw') }}" class="{{ 'active' if current_lang=='sw' }}">SW</a>
+      </div>
+      <span class="topbar-clock" id="live-clock"></span>
+    </div>
+  </div>
+
+  <div class="page-body">
+    {% with messages=get_flashed_messages(with_categories=true) %}
+      {% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+
+  <footer class="footer">
+    {{ t('footer_text') }}
+  </footer>
+</div>
+
+<script>
+const cl=document.getElementById('live-clock');
+if(cl){const t=()=>{const n=new Date();cl.textContent=n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})};t();setInterval(t,1000);}
+document.querySelectorAll('.alert').forEach(a=>{setTimeout(()=>{a.style.transition='opacity .5s';a.style.opacity='0';setTimeout(()=>a.remove(),500)},7000)});
+
+// Mobile sidebar drawer
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const openBtn = document.getElementById('sidebar-toggle');
+  const closeBtn = document.getElementById('sidebar-close');
+  function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); document.body.style.overflow='hidden'; }
+  function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); document.body.style.overflow=''; }
+  if(openBtn) openBtn.addEventListener('click', openSidebar);
+  if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if(overlay) overlay.addEventListener('click', closeSidebar);
+  // Close drawer automatically when a nav link is tapped (mobile UX)
+  document.querySelectorAll('.sidebar .nav-list a, .sidebar .btn-logout').forEach(link=>{
+    link.addEventListener('click', closeSidebar);
+  });
+  // If the window is resized up to desktop width, make sure mobile-only state is cleared
+  window.addEventListener('resize', function(){
+    if(window.innerWidth >= 960) closeSidebar();
+  });
+})();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

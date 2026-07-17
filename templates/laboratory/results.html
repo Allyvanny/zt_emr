@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% block title %}Lab Results{% endblock %}{% block page_title %}Lab Results{% endblock %}{% block page_sub %}All completed laboratory results{% endblock %}
+{% block content %}
+<div class="page-header"><div><h2>Lab Results</h2></div>
+<div class="header-actions">
+  <a href="{{ url_for('laboratory.result_list') }}" class="btn {% if not interp %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+  <a href="{{ url_for('laboratory.result_list',interp='normal') }}" class="btn {% if interp=='normal' %}btn-success{% else %}btn-ghost{% endif %} btn-sm">Normal</a>
+  <a href="{{ url_for('laboratory.result_list',interp='abnormal') }}" class="btn {% if interp=='abnormal' %}btn-warning{% else %}btn-ghost{% endif %} btn-sm">Abnormal</a>
+  <a href="{{ url_for('laboratory.result_list',interp='critical') }}" class="btn {% if interp=='critical' %}btn-danger{% else %}btn-ghost{% endif %} btn-sm">Critical</a>
+</div></div>
+<div class="card"><div class="table-wrap"><table class="data-table">
+<thead><tr><th>Request No</th><th>Patient</th><th>Test</th><th>Result (Summary)</th><th>Interpretation</th><th>Verified By</th><th>Reported</th><th></th></tr></thead>
+<tbody>{% for res in results.items %}<tr>
+<td><code>{{ res.request.request_no }}</code></td>
+<td><strong style="color:var(--tx-1)">{{ res.request.patient.full_name if res.request and res.request.patient else '—' }}</strong></td>
+<td>{{ res.request.test_type if res.request else '—' }}</td>
+<td style="max-width:200px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--tx-2)">{{ res.result_data[:80] }}{% if res.result_data|length > 80 %}…{% endif %}</td>
+<td><span class="badge badge-{{ 'normal' if res.interpretation=='normal' else ('abnormal' if res.interpretation=='abnormal' else 'critical-result') }}">{{ res.interpretation }}</span></td>
+<td style="font-size:12px">{{ res.verifier.full_name if res.verifier else '—' }}</td>
+<td style="font-size:11px">{{ res.created_at|eat }}</td>
+<td><a href="{{ url_for('laboratory.view_request',rid=res.request_id) }}" class="link-action">View</a></td>
+</tr>{% else %}<tr><td colspan="8" class="empty-row">No results found.</td></tr>{% endfor %}</tbody>
+</table></div>
+<div class="pagination">{% if results.has_prev %}<a href="{{ url_for('laboratory.result_list',interp=interp,page=results.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}<span>Page {{ results.page }} of {{ results.pages }}</span>{% if results.has_next %}<a href="{{ url_for('laboratory.result_list',interp=interp,page=results.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}</div></div>
+{% endblock %}

@@ -1,0 +1,9 @@
+/* Add these lines to the END of static/css/main.css (staff CSS) */
+
+.badge-general            { background: var(--info-bg); color: var(--teal-2); }
+.badge-appointment_request{ background: var(--violet-light); color: var(--violet-2); }
+.badge-medical_advice     { background: rgba(59,130,246,.1); color: #1d4ed8; }
+.badge-progress_update    { background: var(--success-bg); color: #007a5a; }
+.badge-urgent-msg         { background: var(--danger-bg); color: #c0243a; }
+.badge-routine            { background: rgba(120,140,150,.1); color: var(--tx-3); }
+.badge-emergency          { background: var(--danger-bg); color: #c0243a; }

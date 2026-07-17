@@ -1,0 +1,30 @@
+{
+  "trained_at": "2026-07-16T18:44:36.178068",
+  "algorithm": "IsolationForest",
+  "n_estimators": 250,
+  "contamination": 0.06,
+  "n_features": 12,
+  "feature_names": [
+    "records_accessed",
+    "failed_logins",
+    "off_hours_flag",
+    "distinct_ips",
+    "actions_per_minute",
+    "after_midnight",
+    "location_changed",
+    "session_duration_min",
+    "distinct_resources",
+    "same_time_new_location",
+    "rapid_fire_ratio",
+    "role_deviation"
+  ],
+  "training_samples": 36,
+  "test_samples": 9,
+  "avg_risk_train": 0.9629,
+  "avg_risk_test": 0.9588,
+  "anomalies_train": 3,
+  "anomalies_test": 0,
+  "database": "mysql",
+  "author": "Alto Dezdel Kiyamba",
+  "institution": "MUST BCS/25"
+}

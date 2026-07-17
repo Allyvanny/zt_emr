@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}Create User{% endblock %}{% block page_title %}Create User{% endblock %}{% block page_sub %}Admin-controlled account creation{% endblock %}
+{% block content %}
+<div class="page-header"><div><a href="{{ url_for('admin.user_list') }}" class="breadcrumb">← Users</a><h2>Create New Account</h2></div></div>
+<div class="form-card form-card-narrow"><form method="POST" action="{{ url_for('admin.create_user') }}">
+  <div class="form-section"><p class="form-section-title">👤 Account Information</p>
+    <div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" name="full_name" required placeholder="e.g. Dr. John Msambwa"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Username <span class="required">*</span></label><input type="text" name="username" required placeholder="e.g. dr_john"><p class="form-hint">Lowercase, no spaces</p></div>
+      <div class="form-group"><label>Role <span class="required">*</span></label>
+        <select name="role" required>{% for r in roles %}<option value="{{ r }}">{{ role_labels[r] }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    <div class="form-group"><label>Email Address <span class="required">*</span></label><input type="email" name="email" required placeholder="user@hospital.or.tz"><p class="form-hint">OTP codes sent to this email.</p></div>
+    <div class="form-group"><label>Temporary Password <span class="required">*</span></label><input type="password" name="password" required placeholder="Min 8 characters"><p class="form-hint">User should change on first login.</p></div>
+  </div>
+  <div class="form-actions"><a href="{{ url_for('admin.user_list') }}" class="btn btn-ghost">Cancel</a><button type="submit" class="btn btn-primary">✓ Create Account</button></div>
+</form></div>{% endblock %}

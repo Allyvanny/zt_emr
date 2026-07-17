@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription - {{ rx.prescription_no }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #fff;
+            color: #222;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 15mm 18mm;
+            background: #fff;
+        }
+
+        .no-print {
+            position: fixed;
+            top: 15px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .print-btn {
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            padding: 10px 22px;
+            font-size: 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .print-btn:hover {
+            background: #1557b0;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+
+        .hospital-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1a73e8;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            color: #555;
+            margin-top: 2px;
+            letter-spacing: 1px;
+        }
+
+        .prescription-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin: 14px 0;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-box {
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px 14px;
+        }
+
+        .info-box-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #1a73e8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 4px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-size: 12.5px;
+        }
+
+        .info-label {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #222;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-dispensed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-partial {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .medications-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+            margin: 14px 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .med-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+            font-size: 12.5px;
+        }
+
+        .med-table thead th {
+            background: #1a73e8;
+            color: #fff;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .med-table thead th:first-child {
+            border-radius: 4px 0 0 0;
+        }
+
+        .med-table thead th:last-child {
+            border-radius: 0 4px 0 0;
+        }
+
+        .med-table tbody td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .med-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .med-table tbody tr:last-child td:first-child {
+            border-radius: 0 0 0 4px;
+        }
+
+        .med-table tbody tr:last-child td:last-child {
+            border-radius: 0 0 4px 0;
+        }
+
+        .med-table .col-num {
+            width: 30px;
+            text-align: center;
+            font-weight: 600;
+            color: #888;
+        }
+
+        .med-table .col-drug {
+            width: 28%;
+        }
+
+        .med-table .col-dosage {
+            width: 17%;
+        }
+
+        .med-table .col-frequency {
+            width: 20%;
+        }
+
+        .med-table .col-duration {
+            width: 17%;
+        }
+
+        .med-table .col-qty {
+            width: 10%;
+            text-align: center;
+        }
+
+        .med-table .col-dispensed {
+            width: 8%;
+            text-align: center;
+        }
+
+        .notes-section {
+            margin: 14px 0;
+            padding: 10px 14px;
+            border: 1px dashed #aaa;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+
+        .notes-label {
+            font-weight: 700;
+            font-size: 12px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .notes-text {
+            font-size: 12.5px;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .dispensed-info {
+            margin: 12px 0;
+            padding: 8px 14px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+            font-size: 12.5px;
+            color: #155724;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .signature-block {
+            text-align: center;
+            width: 200px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 50px;
+            padding-top: 6px;
+            font-size: 11px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: #fff;
+            }
+
+            .page {
+                margin: 0;
+                padding: 10mm 15mm;
+                width: 100%;
+                min-height: auto;
+            }
+
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button class="print-btn" onclick="window.print()">Print Prescription</button>
+    </div>
+
+    <div class="page">
+        <div class="header">
+            <div class="hospital-name">ZERO TRUST EMR</div>
+            <div class="subtitle">Electronic Medical Records System</div>
+        </div>
+
+        <div class="prescription-title">PRESCRIPTION</div>
+
+        <div class="info-grid">
+            <div class="info-box">
+                <div class="info-box-title">Patient Information</div>
+                <div class="info-row">
+                    <span class="info-label">Name</span>
+                    <span class="info-value">{{ rx.patient.full_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Patient ID</span>
+                    <span class="info-value">{{ rx.patient.patient_id }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date of Birth</span>
+                    <span class="info-value">{{ rx.patient.date_of_birth|eat_date }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Gender</span>
+                    <span class="info-value">{{ rx.patient.gender }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Blood Group</span>
+                    <span class="info-value">{{ rx.patient.blood_group or 'N/A' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone</span>
+                    <span class="info-value">{{ rx.patient.phone or 'N/A' }}</span>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">Prescription Details</div>
+                <div class="info-row">
+                    <span class="info-label">Prescription No.</span>
+                    <span class="info-value">{{ rx.prescription_no }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date</span>
+                    <span class="info-value">{{ rx.created_at|eat }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Prescribed By</span>
+                    <span class="info-value">{{ rx.prescriber.full_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status</span>
+                    <span class="info-value">
+                        {% if rx.status == 'dispensed' %}
+                            <span class="status-badge status-dispensed">{{ rx.status }}</span>
+                        {% elif rx.status == 'partial' %}
+                            <span class="status-badge status-partial">{{ rx.status }}</span>
+                        {% else %}
+                            <span class="status-badge status-pending">{{ rx.status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="medications-title">Medications</div>
+        <table class="med-table">
+            <thead>
+                <tr>
+                    <th class="col-num">#</th>
+                    <th class="col-drug">Drug</th>
+                    <th class="col-dosage">Dosage</th>
+                    <th class="col-frequency">Frequency</th>
+                    <th class="col-duration">Duration</th>
+                    <th class="col-qty">Qty</th>
+                    {% if rx.dispenser %}
+                        <th class="col-dispensed">Dispensed</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in rx.items %}
+                    <tr>
+                        <td class="col-num">{{ loop.index }}</td>
+                        <td class="col-drug">{{ item.drug.name }} <small>({{ item.drug.unit }})</small></td>
+                        <td class="col-dosage">{{ item.dosage }}</td>
+                        <td class="col-frequency">{{ item.frequency }}</td>
+                        <td class="col-duration">{{ item.duration }}</td>
+                        <td class="col-qty">{{ item.quantity }}</td>
+                        {% if rx.dispenser %}
+                            <td class="col-dispensed">{{ item.dispensed_qty or '—' }}</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if rx.notes %}
+            <div class="notes-section">
+                <div class="notes-label">Notes</div>
+                <div class="notes-text">{{ rx.notes }}</div>
+            </div>
+        {% endif %}
+
+        {% if rx.dispenser %}
+            <div class="dispensed-info">
+                Dispensed by {{ rx.dispenser.full_name }} on {{ rx.dispensed_at|eat }}
+            </div>
+        {% endif %}
+
+        <div class="footer">
+            <div class="signature-block">
+                <div class="signature-line">Prescriber Signature</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

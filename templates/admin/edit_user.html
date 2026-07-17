@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Edit User{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+{% block page_sub %}Update account details for {{ u.username }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a href="{{ url_for('admin.user_list') }}" class="breadcrumb">← User Management</a>
+    <h2>Edit: {{ u.full_name }}</h2>
+    <p class="page-sub">Update name, email, or role. Email is used for OTP delivery.</p>
+  </div>
+</div>
+
+<div class="form-card form-card-narrow">
+
+  <!-- Current info banner -->
+  <div style="background:var(--teal-light);border:1px solid rgba(0,212,212,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px">
+    <div class="user-avatar ua-{{ u.role }}" style="width:42px;height:42px;font-size:16px;flex-shrink:0">{{ u.full_name[0] }}</div>
+    <div>
+      <p style="font-weight:700;color:var(--tx-1);font-size:14px">{{ u.full_name }}</p>
+      <p style="font-size:12px;color:var(--tx-3)"><code>{{ u.username }}</code> &nbsp;·&nbsp; <span class="badge badge-{{ u.role }}">{{ u.role|replace('_',' ')|title }}</span></p>
+      <p style="font-size:12px;color:var(--tx-3);margin-top:2px">Current email: <strong>{{ u.email }}</strong></p>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('admin.edit_user', uid=u.id) }}">
+    <div class="form-section">
+      <p class="form-section-title">✏️ Edit Account Details</p>
+
+      <div class="form-group">
+        <label>Full Name <span class="required">*</span></label>
+        <input type="text" name="full_name" value="{{ u.full_name }}" required>
+      </div>
+
+      <div class="form-group">
+        <label>📧 Email Address <span class="required">*</span></label>
+        <input type="email" name="email" value="{{ u.email }}" required
+               placeholder="user@gmail.com">
+        <p class="form-hint" style="color:var(--teal-2);font-weight:600">
+          ⚠️ This must be a real Gmail address — OTP security codes will be sent here.
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label>Role <span class="required">*</span></label>
+        <select name="role">
+          {% for r in roles %}
+          <option value="{{ r }}" {{ 'selected' if r == u.role }}>{{ role_labels[r] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('admin.user_list') }}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary">✓ Save Changes</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

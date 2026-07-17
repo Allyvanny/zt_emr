@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Appointments{% endblock %}
+{% block page_title %}Appointments{% endblock %}
+{% block page_sub %}Manage all patient appointments{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div><h2>Appointments</h2></div>
+  <div class="header-actions">
+    {% for s, lbl, cls in [('all','All','btn-ghost'),('pending','Pending','btn-warning'),('approved','Approved','btn-success'),('rejected','Rejected','btn-danger'),('completed','Completed','btn-info'),('cancelled','Cancelled','btn-ghost')] %}
+    <a href="{{ url_for('appointments.appointment_list', status=s) }}"
+       class="btn {{ cls if status==s else 'btn-ghost' }} btn-sm">{{ lbl }}</a>
+    {% endfor %}
+    <a href="{{ url_for('appointments.book_appointment') }}" class="btn btn-primary btn-sm">+ Book</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>Appt No</th><th>Patient</th><th>Doctor</th><th>Date & Time</th><th>Reason</th><th>Status</th><th>Booked By</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for appt in appointments.items %}
+        <tr>
+          <td><code>{{ appt.appointment_no }}</code></td>
+          <td>
+            <strong style="color:var(--tx-1)">{{ appt.patient.full_name if appt.patient else '—' }}</strong><br>
+            <span style="font-size:11px;color:var(--tx-3)">{{ appt.patient.patient_id if appt.patient else '' }}</span>
+          </td>
+          <td style="font-size:12px">{{ appt.doctor.full_name if appt.doctor else '—' }}</td>
+          <td style="font-size:12px">
+            {{ appt.appointment_date|eat_date }}<br>
+            <span style="color:var(--teal-2);font-weight:600">{{ appt.appointment_date|eat_time }}</span>
+          </td>
+          <td style="max-width:160px;font-size:12px;color:var(--tx-3)">{{ appt.reason or '—' }}</td>
+          <td><span class="badge badge-{{ appt.status }}">{{ appt.status }}</span></td>
+          <td style="font-size:11px">{{ appt.requester.full_name if appt.requester else '—' }}</td>
+          <td style="white-space:nowrap">
+            <a href="{{ url_for('appointments.view_appointment', appt_id=appt.id) }}" class="link-action">View</a>
+            {% if appt.status == 'pending' and current_user.role in ['doctor','admin'] and (appt.doctor_id == current_user.id or current_user.role=='admin') %}
+            &nbsp;
+            <form method="POST" action="{{ url_for('appointments.approve_appointment', appt_id=appt.id) }}" style="display:inline">
+              <button type="submit" class="btn btn-success btn-xs">✓</button>
+            </form>
+            {% endif %}
+            {% if appt.status not in ['completed','cancelled'] %}
+            &nbsp;
+            <form method="POST" action="{{ url_for('appointments.cancel_appointment', appt_id=appt.id) }}" style="display:inline">
+              <button type="submit" class="btn btn-danger btn-xs">✕</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty-row">No {{ status }} appointments found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    {% if appointments.has_prev %}<a href="{{ url_for('appointments.appointment_list', status=status, page=appointments.prev_num) }}" class="btn btn-ghost btn-sm">← Prev</a>{% endif %}
+    <span>Page {{ appointments.page }} of {{ appointments.pages }}</span>
+    {% if appointments.has_next %}<a href="{{ url_for('appointments.appointment_list', status=status, page=appointments.next_num) }}" class="btn btn-ghost btn-sm">Next →</a>{% endif %}
+  </div>
+</div>
+{% endblock %}
