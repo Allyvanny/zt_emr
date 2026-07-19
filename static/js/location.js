@@ -10,15 +10,26 @@
   if (params.has('new_session')) {
     sessionStorage.removeItem('zt_loc_attempted');
   }
-  if (sessionStorage.getItem('zt_loc_attempted')) return;
-  sessionStorage.setItem('zt_loc_attempted', '1');
+  if (!sessionStorage.getItem('zt_loc_attempted')) {
+    sessionStorage.setItem('zt_loc_attempted', '1');
+    detectLocation();
+  }
 
-  if (!('geolocation' in navigator)) return;
+  // Expose manual refresh function
+  window.refreshLocation = function () {
+    const badge = document.querySelector('[data-location-display]');
+    if (badge) badge.textContent = '🌍 Detecting location...';
+    sessionStorage.removeItem('zt_loc_attempted');
+    detectLocation();
+  };
 
-  navigator.geolocation.getCurrentPosition(
-    async function (pos) {
-      try {
-        const { latitude, longitude, accuracy } = pos.coords;
+  function detectLocation() {
+    if (!('geolocation' in navigator)) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async function (pos) {
+        try {
+          const { latitude, longitude, accuracy } = pos.coords;
 
         // ── 1st attempt: Nominatim / OpenStreetMap (zoom=18 for max detail) ──
         let detailed = '';

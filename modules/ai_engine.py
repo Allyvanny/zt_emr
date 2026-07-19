@@ -173,7 +173,7 @@ def _train_fresh():
         rng.binomial(1, 0.1, n_night),       # location_changed (home vs hospital)
         rng.uniform(3, 30, n_night),
         rng.integers(1, 3, n_night),
-        rng.zeros(n_night),
+        np.zeros(n_night),
         rng.uniform(0, 0.08, n_night),
         np.zeros(n_night),
     ]).astype(float)
@@ -190,7 +190,7 @@ def _train_fresh():
         rng.binomial(1, 0.15, n_mid),
         rng.uniform(2, 20, n_mid),
         rng.integers(0, 2, n_mid),
-        rng.zeros(n_mid),
+        np.zeros(n_mid),
         rng.uniform(0, 0.05, n_mid),
         np.zeros(n_mid),
     ]).astype(float)
