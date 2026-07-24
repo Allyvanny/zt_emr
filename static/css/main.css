@@ -35,6 +35,7 @@
 
   /* ── Layout ── */
   --sidebar-w:   252px;
+  --sidebar-collapsed-w: 72px;
   --topbar-h:    64px;
   --radius:      10px;
   --radius-lg:   16px;
@@ -62,6 +63,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.6;col
   display:flex;flex-direction:column;z-index:300;
   overflow-y:auto;overflow-x:hidden;
   box-shadow:4px 0 20px rgba(0,180,180,.08);
+  transition:width .25s ease;
 }
 .sidebar-brand{padding:22px 20px 18px;border-bottom:1px solid var(--border-2)}
 .brand-logo-wrap{display:flex;align-items:center;gap:12px;margin-bottom:4px}
@@ -120,6 +122,53 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.6;col
   font-size:12px;font-weight:600;text-decoration:none;transition:all .15s;
 }
 .sidebar-logout:hover{background:var(--danger);color:#fff}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR COLLAPSED — icon-only mode (desktop)
+═══════════════════════════════════════════ */
+.sidebar-collapse-toggle{
+  display:none;align-items:center;justify-content:center;
+  width:100%;padding:8px;border:none;cursor:pointer;
+  background:transparent;color:var(--tx-3);font-size:16px;
+  transition:all .2s;border-top:1px solid var(--border-2);
+  margin-top:auto;
+}
+.sidebar-collapse-toggle:hover{background:var(--teal-light);color:var(--teal-2)}
+
+.sidebar.collapsed{width:var(--sidebar-collapsed-w);overflow:visible}
+.sidebar.collapsed .sidebar-brand{padding:18px 0;border-bottom:1px solid var(--border-2);text-align:center}
+.sidebar.collapsed .brand-logo-wrap{justify-content:center}
+.sidebar.collapsed .brand-name,.sidebar.collapsed .brand-sub{display:none}
+.sidebar.collapsed .sidebar-section{padding:10px 6px 4px}
+.sidebar.collapsed .sidebar-section-label{display:none}
+.sidebar.collapsed .sidebar-nav a{justify-content:center;padding:10px;gap:0;font-size:0}
+.sidebar.collapsed .sidebar-nav a .nav-icon{width:auto;font-size:18px}
+.sidebar.collapsed .sidebar-nav a .nav-text{display:none}
+.sidebar.collapsed .sidebar-nav a.active::before{display:none}
+.sidebar.collapsed .sidebar-nav a.active{background:var(--teal-light);color:var(--teal-2);border-radius:var(--radius)}
+.sidebar.collapsed .sidebar-footer{padding:10px 6px}
+.sidebar.collapsed .sidebar-user{justify-content:center;padding:10px}
+.sidebar.collapsed .user-info{display:none}
+.sidebar.collapsed .sidebar-logout{padding:10px;font-size:0;gap:0}
+.sidebar.collapsed .sidebar-logout .logout-icon{font-size:16px}
+.sidebar.collapsed .sidebar-logout .logout-text{display:none}
+.sidebar.collapsed .sidebar-collapse-toggle{font-size:14px}
+.sidebar.collapsed .sidebar-nav a{position:relative}
+.sidebar.collapsed .sidebar-nav a[data-tooltip]:hover::after{
+  content:attr(data-tooltip);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);
+  background:var(--bg-card);color:var(--tx-1);padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:600;white-space:nowrap;z-index:400;
+  box-shadow:0 4px 16px rgba(0,0,0,.15);border:1px solid var(--border);
+  pointer-events:none;
+}
+.sidebar.collapsed .sidebar-user[data-tooltip]:hover::after{
+  content:attr(data-tooltip);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);
+  background:var(--bg-card);color:var(--tx-1);padding:6px 12px;border-radius:8px;
+  font-size:12px;font-weight:600;white-space:nowrap;z-index:400;
+  box-shadow:0 4px 16px rgba(0,0,0,.15);border:1px solid var(--border);
+  pointer-events:none;
+}
+.sidebar.collapsed .sidebar-user{position:relative}
 
 /* ═══════════════════════════════════════════
    LAYOUT
@@ -565,7 +614,9 @@ code{background:var(--teal-light);border:1px solid rgba(0,212,212,.2);padding:1p
   .sidebar-overlay{display:none}
   .hamburger{display:none}
   .sidebar-close{display:none}
-  .layout{margin-left:var(--sidebar-w)}
+  .sidebar-collapse-toggle{display:flex}
+  .layout{margin-left:var(--sidebar-w);transition:margin-left .25s ease}
+  .sidebar.collapsed~.layout{margin-left:var(--sidebar-collapsed-w)}
   .topbar{padding:0 1.75rem}
   .topbar-title{font-size:16px;max-width:none}
   .topbar-location{display:block}

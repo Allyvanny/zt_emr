@@ -30,38 +30,37 @@
     <ul class="sidebar-nav">
 
       {% if current_user.role in ['doctor','admin'] %}
-      <!-- Doctor gets special dashboard -->
       <li>
-        <a href="{{ url_for('appointments.doctor_dashboard') }}"
+        <a href="{{ url_for('appointments.doctor_dashboard') }}" data-tooltip="Doctor Dashboard"
            {% if request.endpoint=='appointments.doctor_dashboard' %}class="active"{% endif %}>
-          <span class="nav-icon">🩺</span> Doctor Dashboard
+          <span class="nav-icon">🩺</span> <span class="nav-text">Doctor Dashboard</span>
         </a>
       </li>
       {% endif %}
 
       {% if current_user.role in ['admin','nurse','receptionist'] %}
       <li>
-        <a href="{{ url_for('patients.dashboard') }}"
+        <a href="{{ url_for('patients.dashboard') }}" data-tooltip="Dashboard"
            {% if request.endpoint=='patients.dashboard' %}class="active"{% endif %}>
-          <span class="nav-icon">⬡</span> Dashboard
+          <span class="nav-icon">⬡</span> <span class="nav-text">Dashboard</span>
         </a>
       </li>
       {% endif %}
 
       {% if current_user.role in ['admin','doctor','nurse','receptionist'] %}
       <li>
-        <a href="{{ url_for('patients.patient_list') }}"
+        <a href="{{ url_for('patients.patient_list') }}" data-tooltip="Patients"
            {% if request.endpoint in ['patients.patient_list','patients.view_patient','patients.register_patient','patients.add_record'] %}class="active"{% endif %}>
-          <span class="nav-icon">👥</span> Patients
+          <span class="nav-icon">👥</span> <span class="nav-text">Patients</span>
         </a>
       </li>
       {% endif %}
 
       {% if current_user.role in ['admin','doctor','nurse','receptionist'] %}
       <li>
-        <a href="{{ url_for('patients.register_patient') }}"
+        <a href="{{ url_for('patients.register_patient') }}" data-tooltip="Register Patient"
            {% if request.endpoint=='patients.register_patient' %}class="active"{% endif %}>
-          <span class="nav-icon">➕</span> Register Patient
+          <span class="nav-icon">➕</span> <span class="nav-text">Register Patient</span>
         </a>
       </li>
       {% endif %}
@@ -75,22 +74,22 @@
     <p class="sidebar-section-label">Appointments</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('appointments.appointment_list') }}"
+        <a href="{{ url_for('appointments.appointment_list') }}" data-tooltip="All Appointments"
            {% if request.endpoint in ['appointments.appointment_list','appointments.view_appointment'] %}class="active"{% endif %}>
-          <span class="nav-icon">📅</span> All Appointments
+          <span class="nav-icon">📅</span> <span class="nav-text">All Appointments</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('appointments.book_appointment') }}"
+        <a href="{{ url_for('appointments.book_appointment') }}" data-tooltip="Book Appointment"
            {% if request.endpoint=='appointments.book_appointment' %}class="active"{% endif %}>
-          <span class="nav-icon">📝</span> Book Appointment
+          <span class="nav-icon">📝</span> <span class="nav-text">Book Appointment</span>
         </a>
       </li>
       {% if current_user.role in ['doctor','admin'] %}
       <li>
-        <a href="{{ url_for('appointments.appointment_list', status='pending') }}"
+        <a href="{{ url_for('appointments.appointment_list', status='pending') }}" data-tooltip="Pending Approvals"
            {% if request.endpoint=='appointments.appointment_list' and request.args.get('status')=='pending' %}class="active"{% endif %}>
-          <span class="nav-icon">⏳</span> Pending Approvals
+          <span class="nav-icon">⏳</span> <span class="nav-text">Pending Approvals</span>
         </a>
       </li>
       {% endif %}
@@ -104,21 +103,21 @@
     <p class="sidebar-section-label">Pharmacy</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('pharmacy.dashboard') }}"
+        <a href="{{ url_for('pharmacy.dashboard') }}" data-tooltip="Pharmacy Dashboard"
            {% if request.endpoint=='pharmacy.dashboard' %}class="active"{% endif %}>
-          <span class="nav-icon">💊</span> Pharmacy Dashboard
+          <span class="nav-icon">💊</span> <span class="nav-text">Pharmacy Dashboard</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('pharmacy.prescription_list') }}"
+        <a href="{{ url_for('pharmacy.prescription_list') }}" data-tooltip="Prescriptions"
            {% if 'pharmacy.prescription' in (request.endpoint or '') %}class="active"{% endif %}>
-          <span class="nav-icon">📋</span> Prescriptions
+          <span class="nav-icon">📋</span> <span class="nav-text">Prescriptions</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('pharmacy.drug_list') }}"
+        <a href="{{ url_for('pharmacy.drug_list') }}" data-tooltip="Drug Inventory"
            {% if 'pharmacy.drug' in (request.endpoint or '') or request.endpoint=='pharmacy.add_drug' %}class="active"{% endif %}>
-          <span class="nav-icon">🗃️</span> Drug Inventory
+          <span class="nav-icon">🗃️</span> <span class="nav-text">Drug Inventory</span>
         </a>
       </li>
     </ul>
@@ -131,21 +130,21 @@
     <p class="sidebar-section-label">Laboratory</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('laboratory.dashboard') }}"
+        <a href="{{ url_for('laboratory.dashboard') }}" data-tooltip="Lab Dashboard"
            {% if request.endpoint=='laboratory.dashboard' %}class="active"{% endif %}>
-          <span class="nav-icon">🔬</span> Lab Dashboard
+          <span class="nav-icon">🔬</span> <span class="nav-text">Lab Dashboard</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('laboratory.request_list') }}"
+        <a href="{{ url_for('laboratory.request_list') }}" data-tooltip="Lab Requests"
            {% if 'laboratory.request' in (request.endpoint or '') %}class="active"{% endif %}>
-          <span class="nav-icon">🧪</span> Lab Requests
+          <span class="nav-icon">🧪</span> <span class="nav-text">Lab Requests</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('laboratory.result_list') }}"
+        <a href="{{ url_for('laboratory.result_list') }}" data-tooltip="Results"
            {% if request.endpoint=='laboratory.result_list' %}class="active"{% endif %}>
-          <span class="nav-icon">📊</span> Results
+          <span class="nav-icon">📊</span> <span class="nav-text">Results</span>
         </a>
       </li>
     </ul>
@@ -157,9 +156,9 @@
     <p class="sidebar-section-label">Clinical</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('laboratory.new_request') }}"
+        <a href="{{ url_for('laboratory.new_request') }}" data-tooltip="Order Lab Test"
            {% if request.endpoint=='laboratory.new_request' %}class="active"{% endif %}>
-          <span class="nav-icon">🔬</span> Order Lab Test
+          <span class="nav-icon">🔬</span> <span class="nav-text">Order Lab Test</span>
         </a>
       </li>
     </ul>
@@ -172,15 +171,15 @@
     <p class="sidebar-section-label">Patient Portal</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('patient_portal.staff_messages') }}"
+        <a href="{{ url_for('patient_portal.staff_messages') }}" data-tooltip="Patient Messages"
            {% if request.endpoint=='patient_portal.staff_messages' %}class="active"{% endif %}>
-          <span class="nav-icon">💬</span> Patient Messages
+          <span class="nav-icon">💬</span> <span class="nav-text">Patient Messages</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('patient_portal.staff_appointment_requests') }}"
+        <a href="{{ url_for('patient_portal.staff_appointment_requests') }}" data-tooltip="Portal Requests"
            {% if request.endpoint=='patient_portal.staff_appointment_requests' %}class="active"{% endif %}>
-          <span class="nav-icon">📨</span> Portal Appointment Requests
+          <span class="nav-icon">📨</span> <span class="nav-text">Portal Appointment Requests</span>
         </a>
       </li>
     </ul>
@@ -193,27 +192,27 @@
     <p class="sidebar-section-label">Administration</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('admin.user_list') }}"
+        <a href="{{ url_for('admin.user_list') }}" data-tooltip="Users"
            {% if 'admin.user' in (request.endpoint or '') %}class="active"{% endif %}>
-          <span class="nav-icon">👤</span> Users
+          <span class="nav-icon">👤</span> <span class="nav-text">Users</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('admin.activity_logs') }}"
+        <a href="{{ url_for('admin.activity_logs') }}" data-tooltip="Activity Logs"
            {% if request.endpoint=='admin.activity_logs' %}class="active"{% endif %}>
-          <span class="nav-icon">📄</span> Activity Logs
+          <span class="nav-icon">📄</span> <span class="nav-text">Activity Logs</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('admin.risk_logs') }}"
+        <a href="{{ url_for('admin.risk_logs') }}" data-tooltip="Risk Logs"
            {% if request.endpoint=='admin.risk_logs' %}class="active"{% endif %}>
-          <span class="nav-icon">🤖</span> Risk Logs
+          <span class="nav-icon">🤖</span> <span class="nav-text">Risk Logs</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('admin.auth_logs') }}"
+        <a href="{{ url_for('admin.auth_logs') }}" data-tooltip="Auth Logs"
            {% if request.endpoint=='admin.auth_logs' %}class="active"{% endif %}>
-          <span class="nav-icon">🔑</span> Auth Logs
+          <span class="nav-icon">🔑</span> <span class="nav-text">Auth Logs</span>
         </a>
       </li>
     </ul>
@@ -223,14 +222,14 @@
     <p class="sidebar-section-label">Forensics</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('forensics.audit_trail') }}"
+        <a href="{{ url_for('forensics.audit_trail') }}" data-tooltip="Audit Trail"
            {% if request.endpoint=='forensics.audit_trail' %}class="active"{% endif %}>
-          <span class="nav-icon">🔍</span> Audit Trail
+          <span class="nav-icon">🔍</span> <span class="nav-text">Audit Trail</span>
         </a>
       </li>
       <li>
-        <a href="{{ url_for('forensics.export_csv') }}">
-          <span class="nav-icon">📥</span> Export CSV
+        <a href="{{ url_for('forensics.export_csv') }}" data-tooltip="Export CSV">
+          <span class="nav-icon">📥</span> <span class="nav-text">Export CSV</span>
         </a>
       </li>
     </ul>
@@ -242,16 +241,16 @@
     <p class="sidebar-section-label">Account</p>
     <ul class="sidebar-nav">
       <li>
-        <a href="{{ url_for('profile.view_profile') }}"
+        <a href="{{ url_for('profile.view_profile') }}" data-tooltip="My Profile"
            {% if request.endpoint=='profile.view_profile' %}class="active"{% endif %}>
-          <span class="nav-icon">👤</span> My Profile
+          <span class="nav-icon">👤</span> <span class="nav-text">My Profile</span>
         </a>
       </li>
       {% if current_user.role == 'admin' %}
       <li>
-        <a href="{{ url_for('profile.email_settings') }}"
+        <a href="{{ url_for('profile.email_settings') }}" data-tooltip="Email Settings"
            {% if request.endpoint=='profile.email_settings' %}class="active"{% endif %}>
-          <span class="nav-icon">📧</span> Email Settings
+          <span class="nav-icon">📧</span> <span class="nav-text">Email Settings</span>
         </a>
       </li>
       {% endif %}
@@ -259,7 +258,7 @@
   </div>
 
   <div class="sidebar-footer">
-    <div class="sidebar-user">
+    <div class="sidebar-user" data-tooltip="{{ current_user.full_name }}">
       {% if current_user.avatar %}
       <img src="{{ url_for('uploaded_avatar', filename=current_user.avatar) }}"
            style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--teal);flex-shrink:0" alt="">
@@ -271,7 +270,8 @@
         <div class="user-role">{{ current_user.role|replace('_',' ')|title }}</div>
       </div>
     </div>
-    <a href="{{ url_for('auth.logout') }}" class="sidebar-logout">⏻ Sign Out</a>
+    <a href="{{ url_for('auth.logout') }}" class="sidebar-logout"><span class="logout-icon">⏻</span> <span class="logout-text">Sign Out</span></a>
+    <button class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" title="Collapse sidebar">◀</button>
   </div>
 </aside>
 
