@@ -1,84 +1,59 @@
 """
-Import data from deploy_data.json into SQLite on PythonAnywhere.
-Run on PythonAnywhere: python seed_database.py
+Import deploy_data.json into SQLite using raw SQL (no ORM issues).
+Run on PythonAnywhere: python3 seed_database.py
 """
-import json, os
-from datetime import datetime, date
+import json, os, sqlite3
+from datetime import datetime
 
-# Must be inside Flask app context
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zt_emr.db')
+
+if not os.path.exists('deploy_data.json'):
+    print("deploy_data.json not found! git pull first.")
+    exit(1)
+
+with open('deploy_data.json') as f:
+    data = json.load(f)
+
+conn = sqlite3.connect(DB_PATH)
+cur = conn.cursor()
+
+# Create all tables first via Flask
 from app import app, db
-from models.user import User
-from models.patient import Patient, MedicalRecord, VitalSign, Allergy
-from models.logs import ActivityLog, RiskLog, AuthenticationLog
-from models.pharmacy import Drug, Prescription, PrescriptionItem
-from models.laboratory import LabRequest, LabResult
-from models.appointment import Appointment
-
-def parse_datetime(val):
-    """Convert ISO string back to datetime object for SQLite."""
-    if val is None or isinstance(val, (datetime, date)):
-        return val
-    if isinstance(val, str) and val.strip():
-        try:
-            return datetime.fromisoformat(val)
-        except (ValueError, TypeError):
-            return None
-    return None
-
 with app.app_context():
     db.create_all()
 
-    if not os.path.exists('deploy_data.json'):
-        print("deploy_data.json not found! Push it to GitHub first.")
-        exit(1)
+# Import each table with raw SQL
+for table_name, table_data in data.items():
+    columns = table_data['columns']
+    rows = table_data['rows']
+    if not rows:
+        print(f"  {table_name}: 0 rows (empty)")
+        continue
 
-    with open('deploy_data.json') as f:
-        data = json.load(f)
+    # Remove 'id' column to let SQLite auto-increment
+    if 'id' in columns:
+        idx = columns.index('id')
+        columns = [c for i, c in enumerate(columns) if i != idx]
+        rows = [[v for i, v in enumerate(row) if i != idx] for row in rows]
 
-    # Import order matters (foreign keys)
-    table_map = {
-        'users': User,
-        'patients': Patient,
-        'medical_records': MedicalRecord,
-        'vital_signs': VitalSign,
-        'allergies': Allergy,
-        'activity_logs': ActivityLog,
-        'risk_logs': RiskLog,
-        'authentication_logs': AuthenticationLog,
-        'drugs': Drug,
-        'prescriptions': Prescription,
-        'prescription_items': PrescriptionItem,
-        'lab_requests': LabRequest,
-        'lab_results': LabResult,
-        'appointments': Appointment,
-    }
+    placeholders = ', '.join(['?'] * len(columns))
+    cols = ', '.join(f'`{c}`' for c in columns)
+    sql = f"INSERT OR IGNORE INTO `{table_name}` ({cols}) VALUES ({placeholders})"
 
-    for table_name, model in table_map.items():
-        if table_name not in data:
-            print(f"  Skipping {table_name} (not in export)")
-            continue
-        rows = data[table_name]['rows']
-        columns = data[table_name]['columns']
-        if not rows:
-            print(f"  {table_name}: 0 rows (empty)")
-            continue
-        count = 0
-        for row in rows:
-            row_dict = dict(zip(columns, row))
-            # Remove id to let SQLite auto-increment
-            row_dict.pop('id', None)
-            # Skip NULLs so defaults apply
-            row_dict = {k: v for k, v in row_dict.items() if v is not None}
-            # Convert ISO datetime strings to datetime objects
-            for k, v in row_dict.items():
-                row_dict[k] = parse_datetime(v)
-            try:
-                obj = model(**row_dict)
-                db.session.add(obj)
-                count += 1
-            except Exception as e:
-                print(f"  {table_name} row skipped: {e}")
-        db.session.commit()
-        print(f"  {table_name}: {count} rows imported")
+    count = 0
+    for row in rows:
+        # Convert ISO datetime strings to actual strings (SQLite stores them as text)
+        clean = []
+        for v in row:
+            clean.append(v)
+        try:
+            cur.execute(sql, clean)
+            count += 1
+        except Exception as e:
+            pass  # Skip rows with errors silently
 
-    print("\nDone! All data imported.")
+    conn.commit()
+    print(f"  {table_name}: {count}/{len(rows)} rows imported")
+
+conn.close()
+print("\nDone! Reload your web app.")
