@@ -117,7 +117,8 @@ def send_otp_email(user, otp):
             _send_via_sendgrid(sendgrid_key, from_email, user.email, subject, html)
             return True, None
         except Exception as e:
-            pass  # Fall through to SMTP
+            import traceback; traceback.print_exc()
+            return False, f"SendGrid error: {e}"
 
     # Fallback to SMTP (works on localhost)
     if not smtp_user or not smtp_pass:
@@ -194,7 +195,8 @@ def login():
             except: pass
         _su = _email_cfg.get('SMTP_USER','') or os.environ.get('SMTP_USER','')
         _sp = _email_cfg.get('SMTP_PASS','') or os.environ.get('SMTP_PASS','')
-        email_configured = bool(_su and _sp and '@' in _su)
+        _sg = _email_cfg.get('SENDGRID_API_KEY','') or os.environ.get('SENDGRID_API_KEY','')
+        email_configured = bool((_su and (_sp or _sg)) and '@' in _su)
         # Admin-forced MFA: trigger regardless of email config
         # Risk-based MFA: only if email is configured
         should_mfa = user.requires_otp or (email_configured and risk['score'] >= 0.35)
@@ -211,7 +213,7 @@ def login():
                 em = user.email; at = em.index('@')
                 flash(f'Verification code sent to {em[:2]}***{em[at:]}','info')
             else:
-                flash(f'Verification required. DEMO CODE: {otp}','warning')
+                flash(f'Verification required. DEMO CODE: {otp} (Email error: {err})','warning')
             return redirect(url_for('auth.verify_otp'))
         login_user(user); user.last_login = datetime.utcnow(); db.session.commit()
         log_auth(username,'login',True,user.id,f'Direct|{user.last_device}|{user.last_location}')
