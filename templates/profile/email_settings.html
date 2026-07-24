@@ -1,62 +1,99 @@
 {% extends "base.html" %}
 {% block title %}Email Settings{% endblock %}
 {% block page_title %}Email Settings{% endblock %}
-{% block page_sub %}Configure Gmail SMTP for OTP delivery{% endblock %}
+{% block page_sub %}Configure email delivery for OTP codes{% endblock %}
 
 {% block content %}
 <div class="page-header">
-  <div><h2>📧 Email Configuration</h2><p class="page-sub">Configure your Gmail App Password so OTP codes are sent to real email addresses.</p></div>
+  <div><h2>📧 Email Configuration</h2><p class="page-sub">Configure how OTP codes are sent to users. Choose SendGrid (recommended for PythonAnywhere) or Gmail SMTP (recommended for localhost).</p></div>
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;align-items:start">
 
   <div class="form-card">
-    <p class="form-section-title">📧 Gmail SMTP Settings</p>
-
-    <div style="background:var(--teal-light);border:1px solid rgba(0,212,212,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:1.5rem">
-      <p style="font-size:13px;font-weight:700;color:var(--teal-2);margin-bottom:8px">Before you start:</p>
-      <ol style="font-size:12px;color:var(--tx-2);padding-left:1.2rem;line-height:2">
-        <li>Go to <a href="https://myaccount.google.com/security" target="_blank" style="color:var(--teal-2)">myaccount.google.com/security</a></li>
-        <li>Enable <strong>2-Step Verification</strong></li>
-        <li>Search for <strong>"App passwords"</strong> on that page</li>
-        <li>App name: type <strong>Zero Trust EMR</strong> → click Create</li>
-        <li>Copy the <strong>16-character password</strong> shown</li>
-        <li>Paste it below in the App Password field</li>
-      </ol>
-    </div>
+    <p class="form-section-title">📧 Email Provider</p>
 
     <form method="POST" action="{{ url_for('profile.email_settings') }}">
       <div class="form-group">
-        <label>Gmail Address <span class="required">*</span></label>
-        <input type="email" name="smtp_user" required
-               value="{{ config.get('SMTP_USER','') }}"
-               placeholder="yourname@gmail.com">
-        <p class="form-hint">The Gmail account that will send OTP emails.</p>
+        <label>Provider</label>
+        <select name="email_provider" id="email_provider_select" onchange="toggleProvider()" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg-1);color:var(--tx-1)">
+          <option value="sendgrid" {% if config.get('SENDGRID_API_KEY') %}selected{% endif %}>SendGrid API (works on PythonAnywhere)</option>
+          <option value="smtp" {% if not config.get('SENDGRID_API_KEY') %}selected{% endif %}>Gmail SMTP (works on localhost)</option>
+        </select>
       </div>
-      <div class="form-group">
-        <label>Gmail App Password <span class="required">*</span></label>
-        <input type="password" name="smtp_pass" required
-               placeholder="16-character app password (no spaces)">
-        <p class="form-hint">NOT your normal Gmail password. Use the App Password from Google Security.</p>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>SMTP Host</label>
-          <input type="text" name="smtp_host" value="{{ config.get('SMTP_HOST','smtp.gmail.com') }}">
+
+      <!-- SendGrid section -->
+      <div id="sendgrid-section" style="display:{% if config.get('SENDGRID_API_KEY') %}block{% else %}none{% endif %}">
+        <div style="background:var(--teal-light);border:1px solid rgba(0,212,212,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:1.5rem">
+          <p style="font-size:13px;font-weight:700;color:var(--teal-2);margin-bottom:8px">Setup SendGrid (free, 100 emails/day):</p>
+          <ol style="font-size:12px;color:var(--tx-2);padding-left:1.2rem;line-height:2">
+            <li>Go to <a href="https://signup.sendgrid.com" target="_blank" style="color:var(--teal-2)">signup.sendgrid.com</a> and create free account</li>
+            <li>Verify your email address</li>
+            <li>Go to <strong>Settings → API Keys → Create API Key</strong></li>
+            <li>Give it name <strong>Zero Trust EMR</strong> → click Create & Copy Key</li>
+            <li>Paste the key below</li>
+          </ol>
         </div>
         <div class="form-group">
-          <label>SMTP Port</label>
-          <input type="number" name="smtp_port" value="{{ config.get('SMTP_PORT',587) }}">
+          <label>From Email Address <span class="required">*</span></label>
+          <input type="email" name="smtp_user" value="{{ config.get('SMTP_USER','') }}" placeholder="yourname@gmail.com">
+          <p class="form-hint">The email that will appear as sender. Must match your SendGrid verified sender.</p>
+        </div>
+        <div class="form-group">
+          <label>SendGrid API Key <span class="required">*</span></label>
+          <input type="password" name="sendgrid_key" placeholder="SG.xxxxxxxxxxxx...">
+          <p class="form-hint">Paste your SendGrid API key here.</p>
+        </div>
+      </div>
+
+      <!-- SMTP section -->
+      <div id="smtp-section" style="display:{% if not config.get('SENDGRID_API_KEY') %}block{% else %}none{% endif %}">
+        <div style="background:var(--teal-light);border:1px solid rgba(0,212,212,.25);border-radius:var(--radius);padding:14px 16px;margin-bottom:1.5rem">
+          <p style="font-size:13px;font-weight:700;color:var(--teal-2);margin-bottom:8px">Before you start:</p>
+          <ol style="font-size:12px;color:var(--tx-2);padding-left:1.2rem;line-height:2">
+            <li>Go to <a href="https://myaccount.google.com/security" target="_blank" style="color:var(--teal-2)">myaccount.google.com/security</a></li>
+            <li>Enable <strong>2-Step Verification</strong></li>
+            <li>Search for <strong>"App passwords"</strong> on that page</li>
+            <li>App name: type <strong>Zero Trust EMR</strong> → click Create</li>
+            <li>Copy the <strong>16-character password</strong> shown</li>
+            <li>Paste it below in the App Password field</li>
+          </ol>
+        </div>
+        <div class="form-group">
+          <label>Gmail Address <span class="required">*</span></label>
+          <input type="email" name="smtp_user" value="{{ config.get('SMTP_USER','') }}" placeholder="yourname@gmail.com">
+        </div>
+        <div class="form-group">
+          <label>Gmail App Password <span class="required">*</span></label>
+          <input type="password" name="smtp_pass" placeholder="16-character app password (no spaces)">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>SMTP Host</label>
+            <input type="text" name="smtp_host" value="{{ config.get('SMTP_HOST','smtp.gmail.com') }}">
+          </div>
+          <div class="form-group">
+            <label>SMTP Port</label>
+            <input type="number" name="smtp_port" value="{{ config.get('SMTP_PORT',587) }}">
+          </div>
         </div>
       </div>
 
       <div class="form-actions" style="flex-direction:column;gap:8px;align-items:stretch">
-        <button type="submit" name="save" class="btn btn-primary btn-full">✓ Save Email Settings</button>
+        <button type="submit" name="save" class="btn btn-primary btn-full">Save Email Settings</button>
         <button type="submit" name="send_test" value="1" class="btn btn-secondary btn-full">
-          📧 Save & Send Test Email to {{ current_user.email }}
+          Save & Send Test Email to {{ current_user.email }}
         </button>
       </div>
     </form>
+
+    <script>
+    function toggleProvider(){
+      var v=document.getElementById('email_provider_select').value;
+      document.getElementById('sendgrid-section').style.display=v==='sendgrid'?'block':'none';
+      document.getElementById('smtp-section').style.display=v==='smtp'?'block':'none';
+    }
+    </script>
   </div>
 
   <div>

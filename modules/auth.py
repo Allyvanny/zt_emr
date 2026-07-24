@@ -48,36 +48,82 @@ def parse_device(ua):
     br   = 'Edge' if 'Edg/' in ua else 'Chrome' if 'Chrome/' in ua else 'Firefox' if 'Firefox/' in ua else 'Safari' if 'Safari/' in ua else 'Browser'
     return f'{br} on {os_n}'
 
+def _otp_html(user, otp):
+    return f"""
+    <div style="font-family:'Segoe UI',sans-serif;max-width:500px;margin:auto;background:#0f172a;border-radius:16px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:28px 32px;text-align:center;">
+        <h1 style="color:white;margin:0;font-size:22px;">Zero Trust EMR</h1>
+        <p style="color:rgba(255,255,255,.8);margin:4px 0 0;font-size:13px;">MUST - BCS/25 - Mbeya</p>
+      </div>
+      <div style="background:#1e293b;padding:28px 32px;">
+        <p style="color:#94a3b8;font-size:14px;">Hello <span style="color:#f1f5f9;font-weight:600;">{user.full_name}</span>,</p>
+        <p style="color:#94a3b8;font-size:14px;">Your security verification code is:</p>
+        <div style="text-align:center;margin:24px 0;">
+          <span style="display:inline-block;background:#6366f1;color:white;font-size:40px;font-weight:900;letter-spacing:14px;padding:18px 28px;border-radius:12px;">{otp}</span>
+        </div>
+        <div style="background:#0f172a;border-radius:8px;padding:14px 16px;margin-top:16px;">
+          <p style="margin:0;color:#64748b;font-size:12px;">Expires in 5 minutes - {request.remote_addr} - {parse_device(request.user_agent.string)}</p>
+        </div>
+        <p style="color:#475569;font-size:12px;margin-top:16px;">If you did not attempt to log in, contact your system administrator immediately.</p>
+      </div>
+    </div>"""
+
+def _send_via_sendgrid(api_key, from_email, to_email, subject, html):
+    import urllib.request
+    data = json.dumps({
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "from": {"email": from_email, "name": "Zero Trust EMR"},
+        "subject": subject,
+        "content": [{"type": "text/html", "value": html}]
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.sendgrid.com/v3/mail/send",
+        data=data,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return resp.status in (200, 201, 202)
+
+def _send_via_smtp(host, port, smtp_user, smtp_pass, from_email, to_email, subject, html):
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject; msg['From'] = from_email; msg['To'] = to_email
+    msg.attach(MIMEText(html, 'html'))
+    with smtplib.SMTP(host, int(port)) as s:
+        s.ehlo(); s.starttls(); s.login(smtp_user, smtp_pass)
+        s.sendmail(from_email, to_email, msg.as_string())
+
 def send_otp_email(user, otp):
     host, port, smtp_user, smtp_pass, smtp_from = _get_smtp_cfg()
+    subject = f'EMR Security Code: {otp}'
+    html = _otp_html(user, otp)
+
+    # Load email config from file for SendGrid key
+    _email_cfg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'email_config.py')
+    _email_cfg = {}
+    if os.path.exists(_email_cfg_path):
+        try:
+            with open(_email_cfg_path) as _f: exec(_f.read(), _email_cfg)
+        except: pass
+    sendgrid_key = _email_cfg.get('SENDGRID_API_KEY', '') or os.environ.get('SENDGRID_API_KEY', '')
+    from_email = _email_cfg.get('SMTP_USER', '') or smtp_user
+
+    # Try SendGrid API first (works on PythonAnywhere free)
+    if sendgrid_key and from_email:
+        try:
+            _send_via_sendgrid(sendgrid_key, from_email, user.email, subject, html)
+            return True, None
+        except Exception as e:
+            pass  # Fall through to SMTP
+
+    # Fallback to SMTP (works on localhost)
     if not smtp_user or not smtp_pass:
-        return False, "Email not configured. Go to Admin → Email Settings."
+        return False, "Email not configured. Go to Admin -> Email Settings."
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = f'🔐 EMR Security Code: {otp}'
-        msg['From'] = smtp_from; msg['To'] = user.email
-        html = f"""
-        <div style="font-family:'Segoe UI',sans-serif;max-width:500px;margin:auto;background:#0f172a;border-radius:16px;overflow:hidden;">
-          <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:28px 32px;text-align:center;">
-            <h1 style="color:white;margin:0;font-size:22px;">🔐 Zero Trust EMR</h1>
-            <p style="color:rgba(255,255,255,.8);margin:4px 0 0;font-size:13px;">MUST · BCS/25 · Mbeya</p>
-          </div>
-          <div style="background:#1e293b;padding:28px 32px;">
-            <p style="color:#94a3b8;font-size:14px;">Hello <span style="color:#f1f5f9;font-weight:600;">{user.full_name}</span>,</p>
-            <p style="color:#94a3b8;font-size:14px;">Your security verification code is:</p>
-            <div style="text-align:center;margin:24px 0;">
-              <span style="display:inline-block;background:#6366f1;color:white;font-size:40px;font-weight:900;letter-spacing:14px;padding:18px 28px;border-radius:12px;">{otp}</span>
-            </div>
-            <div style="background:#0f172a;border-radius:8px;padding:14px 16px;margin-top:16px;">
-              <p style="margin:0;color:#64748b;font-size:12px;">⏱ Expires in 5 minutes &nbsp;·&nbsp; 📍 {request.remote_addr} &nbsp;·&nbsp; 🖥 {parse_device(request.user_agent.string)}</p>
-            </div>
-            <p style="color:#475569;font-size:12px;margin-top:16px;">If you did not attempt to log in, contact your system administrator immediately.</p>
-          </div>
-        </div>"""
-        msg.attach(MIMEText(html, 'html'))
-        with smtplib.SMTP(host, int(port)) as s:
-            s.ehlo(); s.starttls(); s.login(smtp_user, smtp_pass)
-            s.sendmail(smtp_user, user.email, msg.as_string())
+        _send_via_smtp(host, port, smtp_user, smtp_pass, smtp_from, user.email, subject, html)
         return True, None
     except Exception as e: return False, str(e)
 

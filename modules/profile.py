@@ -157,6 +157,8 @@ def email_settings():
         smtp_pass = request.form.get('smtp_pass', '').strip()
         smtp_host = request.form.get('smtp_host', 'smtp.gmail.com').strip()
         smtp_port = request.form.get('smtp_port', '587').strip()
+        sendgrid_key = request.form.get('sendgrid_key', '').strip()
+        email_provider = request.form.get('email_provider', 'smtp')
 
         config_content = f"""# Zero Trust EMR — Email Configuration
 # Generated automatically. Do not edit manually.
@@ -165,6 +167,7 @@ SMTP_PORT = {smtp_port}
 SMTP_USER = '{smtp_user}'
 SMTP_PASS = '{smtp_pass}'
 SMTP_FROM = 'Zero Trust EMR <{smtp_user}>'
+SENDGRID_API_KEY = '{sendgrid_key}'
 """
         with open(config_path, 'w') as f:
             f.write(config_content)
