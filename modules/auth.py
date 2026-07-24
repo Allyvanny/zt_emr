@@ -149,7 +149,10 @@ def login():
         _su = _email_cfg.get('SMTP_USER','') or os.environ.get('SMTP_USER','')
         _sp = _email_cfg.get('SMTP_PASS','') or os.environ.get('SMTP_PASS','')
         email_configured = bool(_su and _sp and '@' in _su)
-        if email_configured and (risk['score'] >= 0.35 or user.requires_otp):
+        # Admin-forced MFA: trigger regardless of email config
+        # Risk-based MFA: only if email is configured
+        should_mfa = user.requires_otp or (email_configured and risk['score'] >= 0.35)
+        if should_mfa:
             otp = gen_otp()
             user.otp_code = otp; user.otp_expiry = datetime.utcnow()+timedelta(minutes=5); user.otp_verified=False
             db.session.commit()
@@ -162,7 +165,7 @@ def login():
                 em = user.email; at = em.index('@')
                 flash(f'Verification code sent to {em[:2]}***{em[at:]}','info')
             else:
-                flash(f'Email failed. DEMO CODE: {otp}','warning')
+                flash(f'Verification required. DEMO CODE: {otp}','warning')
             return redirect(url_for('auth.verify_otp'))
         login_user(user); user.last_login = datetime.utcnow(); db.session.commit()
         log_auth(username,'login',True,user.id,f'Direct|{user.last_device}|{user.last_location}')
@@ -183,7 +186,8 @@ def verify_otp():
             flash('OTP expired. Please log in again.','danger')
             session.pop('pending_user_id',None); return redirect(url_for('auth.login'))
         if entered == user.otp_code:
-            user.otp_verified=True; user.last_login=datetime.utcnow(); user.requires_otp=False
+            user.otp_verified=True; user.last_login=datetime.utcnow()
+            # DON'T clear requires_otp — if admin forced it, keep it for every login
             db.session.commit()
             [session.pop(k,None) for k in ['pending_user_id','risk_score','risk_reason']]
             login_user(user)
