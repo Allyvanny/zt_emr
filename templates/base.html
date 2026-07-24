@@ -19,9 +19,9 @@
   <div class="sidebar-brand">
     <div class="brand-logo-wrap">
       <span class="brand-name">Zero Trust EMR</span>
+      <button class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" title="Collapse sidebar">◀</button>
       <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">✕</button>
     </div>
-    
   </div>
 
   <!-- MAIN -->
@@ -271,7 +271,6 @@
       </div>
     </div>
     <a href="{{ url_for('auth.logout') }}" class="sidebar-logout"><span class="logout-icon">⏻</span> <span class="logout-text">Sign Out</span></a>
-    <button class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" title="Collapse sidebar">◀</button>
   </div>
 </aside>
 

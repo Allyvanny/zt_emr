@@ -128,17 +128,17 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.6;col
 ═══════════════════════════════════════════ */
 .sidebar-collapse-toggle{
   display:none;align-items:center;justify-content:center;
-  width:100%;padding:8px;border:none;cursor:pointer;
-  background:transparent;color:var(--tx-3);font-size:16px;
-  transition:all .2s;border-top:1px solid var(--border-2);
-  margin-top:auto;
+  width:28px;height:28px;border:none;cursor:pointer;flex-shrink:0;
+  background:var(--teal-light);color:var(--tx-2);font-size:12px;
+  transition:all .2s;border-radius:8px;border:1px solid var(--border);
 }
-.sidebar-collapse-toggle:hover{background:var(--teal-light);color:var(--teal-2)}
+.sidebar-collapse-toggle:hover{background:var(--teal);color:#fff}
 
 .sidebar.collapsed{width:var(--sidebar-collapsed-w);overflow:visible}
 .sidebar.collapsed .sidebar-brand{padding:18px 0;border-bottom:1px solid var(--border-2);text-align:center}
-.sidebar.collapsed .brand-logo-wrap{justify-content:center}
+.sidebar.collapsed .brand-logo-wrap{justify-content:center;gap:0}
 .sidebar.collapsed .brand-name,.sidebar.collapsed .brand-sub{display:none}
+.sidebar.collapsed .sidebar-collapse-toggle{width:36px;height:36px;font-size:14px;margin:0;background:var(--teal-light)}
 .sidebar.collapsed .sidebar-section{padding:10px 6px 4px}
 .sidebar.collapsed .sidebar-section-label{display:none}
 .sidebar.collapsed .sidebar-nav a{justify-content:center;padding:10px;gap:0;font-size:0}
@@ -152,7 +152,6 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.6;col
 .sidebar.collapsed .sidebar-logout{padding:10px;font-size:0;gap:0}
 .sidebar.collapsed .sidebar-logout .logout-icon{font-size:16px}
 .sidebar.collapsed .sidebar-logout .logout-text{display:none}
-.sidebar.collapsed .sidebar-collapse-toggle{font-size:14px}
 .sidebar.collapsed .sidebar-nav a{position:relative}
 .sidebar.collapsed .sidebar-nav a[data-tooltip]:hover::after{
   content:attr(data-tooltip);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);
