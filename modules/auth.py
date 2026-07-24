@@ -198,8 +198,10 @@ def login():
         _sg = _email_cfg.get('SENDGRID_API_KEY','') or os.environ.get('SENDGRID_API_KEY','')
         email_configured = bool((_su and (_sp or _sg)) and '@' in _su)
         # Admin-forced MFA: trigger regardless of email config
+        # First-time login: always require OTP
         # Risk-based MFA: only if email is configured
-        should_mfa = user.requires_otp or (email_configured and risk['score'] >= 0.35)
+        is_first_login = user.last_login is None
+        should_mfa = user.requires_otp or is_first_login or (email_configured and risk['score'] >= 0.35)
         if should_mfa:
             otp = gen_otp()
             user.otp_code = otp; user.otp_expiry = datetime.utcnow()+timedelta(minutes=5); user.otp_verified=False
