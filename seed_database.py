@@ -3,6 +3,7 @@ Import data from deploy_data.json into SQLite on PythonAnywhere.
 Run on PythonAnywhere: python seed_database.py
 """
 import json, os
+from datetime import datetime, date
 
 # Must be inside Flask app context
 from app import app, db
@@ -12,6 +13,17 @@ from models.logs import ActivityLog, RiskLog, AuthenticationLog
 from models.pharmacy import Drug, Prescription, PrescriptionItem
 from models.laboratory import LabRequest, LabResult
 from models.appointment import Appointment
+
+def parse_datetime(val):
+    """Convert ISO string back to datetime object for SQLite."""
+    if val is None or isinstance(val, (datetime, date)):
+        return val
+    if isinstance(val, str) and val.strip():
+        try:
+            return datetime.fromisoformat(val)
+        except (ValueError, TypeError):
+            return None
+    return None
 
 with app.app_context():
     db.create_all()
@@ -57,6 +69,9 @@ with app.app_context():
             row_dict.pop('id', None)
             # Skip NULLs so defaults apply
             row_dict = {k: v for k, v in row_dict.items() if v is not None}
+            # Convert ISO datetime strings to datetime objects
+            for k, v in row_dict.items():
+                row_dict[k] = parse_datetime(v)
             try:
                 obj = model(**row_dict)
                 db.session.add(obj)
