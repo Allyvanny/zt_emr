@@ -26,7 +26,9 @@ def gen_otp(): return ''.join(random.choices(string.digits, k=6))
 def clean_location_text(text):
     """Server-side location cleanup. Normalizes location strings so the same
     place always looks the same regardless of which geolocation service or
-    login session produced it. Removes bad road names and redundant parts."""
+    login session produced it. Removes bad road names, duplicate city names,
+    and redundant administrative parts, while keeping the most specific
+    place names (village, quarter, market area) at the front."""
     if not text: return text
     text = str(text).strip()
     # Remove "Shotcut to X" / "Shortcut to X" descriptions, not place names
@@ -38,11 +40,23 @@ def clean_location_text(text):
            'turnoff','turn off','junction','intersection','bypass']
     parts = [p.strip() for p in text.split(',') if p.strip()]
     cleaned = [p for p in parts if not any(b in p.lower() for b in bad)]
-    # Remove redundant "Municipal" / "Municipality" when it repeats the town
-    if len(cleaned) >= 2:
-        cleaned = [p for p in cleaned if 'municipality' not in p.lower()]
-    # Normalize "Mbeya Region" / "Mbeya Municipal" style tails to a city
-    result = ', '.join(cleaned).strip(' ,')
+    # Deduplicate: "Mbeya, Mbeya Municipal" -> "Mbeya Municipal"
+    # (the city name is repeated inside the municipality name)
+    out = []
+    for p in cleaned:
+        if out:
+            # Skip current part if it duplicates the previous part
+            if p.lower() == out[-1].lower():
+                continue
+            # Skip city name if the next part (municipality) contains it:
+            # "Mbeya, Mbeya Municipal" — keep only "Mbeya Municipal"
+            prev_contains = p.lower().startswith(out[-1].lower()) and p.lower() != out[-1].lower()
+            cur_contains  = out[-1].lower().startswith(p.lower()) and out[-1].lower() != p.lower()
+            if prev_contains or cur_contains:
+                out[-1] = p if len(p) >= len(out[-1]) else out[-1]
+                continue
+        out.append(p)
+    result = ', '.join(out).strip(' ,')
     return result or text
 
 def get_location(ip):

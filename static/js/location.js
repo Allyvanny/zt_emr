@@ -31,24 +31,25 @@
         try {
           const { latitude, longitude, accuracy } = pos.coords;
 
-        // ── 1st attempt: Nominatim / OpenStreetMap (zoom=18 for max detail) ──
+        // ── 1st attempt: Nominatim / OpenStreetMap (zoom=20 for micro-detail) ──
+        // zoom=20 returns the most specific place (e.g. "Ikuti Sokoni" village,
+        // quarter or neighbourhood), which lower zooms omit.
         let detailed = '';
         try {
           const r1 = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=18&addressdetails=1&extratags=1&namedetails=1`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=20&addressdetails=1&extratags=1&namedetails=1`,
             { headers: { 'Accept-Language': 'en' } }
           );
           const geo = await r1.json();
           detailed = buildNominatimLocation(geo);
         } catch (_) { /* try fallback */ }
 
-        // ── 2nd attempt: Nominatim at zoom=17 (ward/neighborhood level) ──────
-        // If zoom=18 gave bad results (weird road names), try a slightly
-        // lower zoom which tends to return more reliable place names.
+        // ── 2nd attempt: Nominatim at zoom=18 (ward/neighbourhood level) ──
+        // If zoom=20 gave bad results (weird road names), step down one level.
         if (!detailed || hasBadRoadName(detailed)) {
           try {
             const r1b = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=17&addressdetails=1&extratags=1&namedetails=1`,
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=18&addressdetails=1&extratags=1&namedetails=1`,
               { headers: { 'Accept-Language': 'en' } }
             );
             const geo = await r1b.json();
@@ -59,7 +60,22 @@
           } catch (_) { /* ignore */ }
         }
 
-        // ── 3rd attempt: BigDataCloud ──────────────────────────────────────
+        // ── 3rd attempt: Nominatim at zoom=16 (city/municipality level) ──────
+        if (!detailed || hasBadRoadName(detailed)) {
+          try {
+            const r1c = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=16&addressdetails=1&extratags=1&namedetails=1`,
+              { headers: { 'Accept-Language': 'en' } }
+            );
+            const geo = await r1c.json();
+            const alt = buildNominatimLocation(geo);
+            if (alt && (!detailed || alt.length > detailed.length)) {
+              detailed = alt;
+            }
+          } catch (_) { /* ignore */ }
+        }
+
+        // ── 4th attempt: BigDataCloud ──────────────────────────────────────
         if (!detailed || hasBadRoadName(detailed)) {
           try {
             const r2 = await fetch(
@@ -120,19 +136,19 @@
     const skip = new Set(['africa', 'tanzania', 'united republic of tanzania',
       'asia', 'earth', 'unknown', '']);
 
-    // ── Tier 1: Named places (most reliable) ──
-    // These are actual named places from OSM, not derived from road names
+    // ── Tier 0: micro-place name (shop/market/village/quarter) ──
+    // At zoom=20 Nominatim can return a named local place like "Ikuti Sokoni"
+    // (a market) or a village quarter. Use it as the most specific identifier
+    // when it isn't a road description.
     const placeName = named.name || named['name:en'] || '';
-    if (placeName && !skip.has(placeName.toLowerCase()) && !hasBadRoadName(placeName)) {
-      // We have a good named place — use it as the primary identifier
-      return buildSmartCombo(a, placeName, skip);
-    }
+    const isGoodPlace = placeName && !skip.has(placeName.toLowerCase()) && !hasBadRoadName(placeName);
 
-    // ── Tier 2: Administrative hierarchy (ward, village, etc.) ──
+    // ── Tier 1: Administrative hierarchy (ward, village, etc.) ──
     // Prioritize meaningful place types over road names
     const priority = [
       a.hamlet, a.village, a.neighbourhood, a.quarter,
-      a.suburb, a.ward, a.city_district, a.town, a.municipality
+      a.suburb, a.ward, a.city_district, a.town, a.municipality,
+      a.county, a.state_district
     ];
 
     const parts = [];
@@ -148,6 +164,15 @@
       seen.add(key);
       parts.push(c.trim());
       if (parts.length >= 3) break;
+    }
+
+    // Insert the micro-place name at the front if it isn't already present
+    if (isGoodPlace) {
+      const pk = placeName.toLowerCase();
+      if (!seen.has(pk)) {
+        parts.unshift(placeName);
+        if (parts.length > 4) parts.pop();
+      }
     }
 
     // Second pass: add road/street name only if it looks real
@@ -230,9 +255,20 @@
     loc = loc.replace(/\b(shortcut|shotcut) to \w+/gi, '');
     // Remove any remaining bad road-name fragments
     loc = loc.replace(/(,\s*)?(road to \w+|route to \w+|highway\s*\w*|towards\s*\w*|bypass)/gi, '');
-    // Remove redundant "Municipal"/"Municipality" when town is already present
-    loc = loc.replace(/(,\s*)?\w+\s*(Municipal|Municipality)/gi, '');
     const parts = loc.split(',').map(s => s.trim()).filter(Boolean);
-    return parts.join(', ').trim();
+    // Deduplicate "Mbeya, Mbeya Municipal" -> "Mbeya Municipal"
+    const out = [];
+    for (const p of parts) {
+      if (!out.length) { out.push(p); continue; }
+      const last = out[out.length - 1];
+      const l = last.toLowerCase(), c = p.toLowerCase();
+      if (l === c) continue;
+      if (c.startsWith(l) || l.startsWith(c)) {
+        out[out.length - 1] = (p.length >= last.length) ? p : last;
+        continue;
+      }
+      out.push(p);
+    }
+    return out.join(', ').trim();
   }
 })();
