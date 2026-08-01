@@ -21,6 +21,10 @@ h1{text-align:center;font-size:1.4rem;font-weight:800;color:#1a2332}
 .fg label{display:block;font-size:11px;font-weight:700;color:#3d5166;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
 .fg input,.fg select{width:100%;padding:10px 13px;background:#f4fbfc;border:1.5px solid rgba(0,212,212,.18);border-radius:10px;font-size:13px;color:#1a2332;font-family:'Inter',sans-serif;transition:all .15s}
 .fg input:focus,.fg select:focus{outline:none;border-color:#00d4d4;box-shadow:0 0 0 3px rgba(0,212,212,.1);background:#fff}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:42px !important}
+.password-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;line-height:1;opacity:.55;transition:opacity .15s}
+.password-toggle:hover{opacity:1}
 .fg select option{background:#fff}
 .req{color:#e8445a}
 .hint{font-size:11px;color:#b0c4ce;margin-top:3px}
@@ -82,4 +86,5 @@ h1{text-align:center;font-size:1.4rem;font-weight:800;color:#1a2332}
 
   <div class="login-link">{{ t('already_have_account') }} <a href="{{ url_for('patient_auth.login') }}">{{ t('sign_in_link') }}</a></div>
 </div>
+<script src="{{ url_for('static',filename='js/password_toggle.js') }}"></script>
 </body></html>

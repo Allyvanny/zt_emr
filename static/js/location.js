@@ -227,14 +227,12 @@
     // Remove leading/trailing commas and spaces
     loc = loc.replace(/^[\s,]+|[\s,]+$/g, '');
     // Remove "Shotcut to Library" and similar junk if they leaked through
-    loc = loc.replace(/\bshortcut to \w+/gi, '').replace(/\bshotcut to \w+/gi, '');
-    // Remove "Mbeya Municipal" if it appears after the ward (redundant)
-    // Keep it only if it's the only geographic reference
+    loc = loc.replace(/\b(shortcut|shotcut) to \w+/gi, '');
+    // Remove any remaining bad road-name fragments
+    loc = loc.replace(/(,\s*)?(road to \w+|route to \w+|highway\s*\w*|towards\s*\w*|bypass)/gi, '');
+    // Remove redundant "Municipal"/"Municipality" when town is already present
+    loc = loc.replace(/(,\s*)?\w+\s*(Municipal|Municipality)/gi, '');
     const parts = loc.split(',').map(s => s.trim()).filter(Boolean);
-    if (parts.length >= 3) {
-      const filtered = parts.filter(p => !p.toLowerCase().includes('municipal'));
-      if (filtered.length >= 2) return filtered.join(', ');
-    }
-    return parts.join(', ');
+    return parts.join(', ').trim();
   }
 })();

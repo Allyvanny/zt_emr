@@ -23,6 +23,28 @@ def _get_smtp_cfg():
 
 def gen_otp(): return ''.join(random.choices(string.digits, k=6))
 
+def clean_location_text(text):
+    """Server-side location cleanup. Normalizes location strings so the same
+    place always looks the same regardless of which geolocation service or
+    login session produced it. Removes bad road names and redundant parts."""
+    if not text: return text
+    text = str(text).strip()
+    # Remove "Shotcut to X" / "Shortcut to X" descriptions, not place names
+    import re
+    text = re.sub(r'\b(?:shortcut|shotcut)\s+to\s+\w+', '', text, flags=re.I)
+    # Drop remaining junk descriptions
+    bad = ['road to','route to','highway','motorway','towards',
+           'near ','beside','next to','opposite','across from',
+           'turnoff','turn off','junction','intersection','bypass']
+    parts = [p.strip() for p in text.split(',') if p.strip()]
+    cleaned = [p for p in parts if not any(b in p.lower() for b in bad)]
+    # Remove redundant "Municipal" / "Municipality" when it repeats the town
+    if len(cleaned) >= 2:
+        cleaned = [p for p in cleaned if 'municipality' not in p.lower()]
+    # Normalize "Mbeya Region" / "Mbeya Municipal" style tails to a city
+    result = ', '.join(cleaned).strip(' ,')
+    return result or text
+
 def get_location(ip):
     if ip in ('127.0.0.1','::1'): return 'Localhost'
     try:
@@ -38,7 +60,8 @@ def get_location(ip):
                     val = (p or '').strip()
                     if val and val.lower() not in skip and '/' not in val:
                         parts.append(val)
-                return ', '.join(parts) if parts else 'Unknown'
+                loc = ', '.join(parts) if parts else 'Unknown'
+                return clean_location_text(loc)
     except: pass
     return 'Unknown'
 
@@ -341,6 +364,8 @@ def refine_location():
     # Prefer the detailed location string (e.g. "Ikuti, Iyunga, Mbeya")
     # over the basic "city, country" format.
     place = detailed if detailed else ', '.join(p for p in (city, country) if p) or 'Unknown'
+    # Clean the location server-side so stored values are consistent
+    place = clean_location_text(place)
     # Always update — browser GPS is more accurate than IP-based location.
     # We never let this endpoint influence risk scoring (see docstring),
     # so it's safe to always overwrite for display purposes.

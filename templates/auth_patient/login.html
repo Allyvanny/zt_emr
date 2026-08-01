@@ -23,6 +23,10 @@ h1{text-align:center;font-size:1.55rem;font-weight:800;color:#1a2332}
 .fg label{display:block;font-size:11px;font-weight:700;color:#3d5166;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
 .fg input{width:100%;padding:11px 15px;background:#f4fbfc;border:1.5px solid rgba(0,212,212,.18);border-radius:11px;font-size:14px;color:#1a2332;font-family:'Inter',sans-serif;transition:all .15s}
 .fg input:focus{outline:none;border-color:#00d4d4;box-shadow:0 0 0 3px rgba(0,212,212,.1);background:#fff}
+.password-wrap{position:relative}
+.password-wrap input{padding-right:42px !important}
+.password-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;line-height:1;opacity:.55;transition:opacity .15s}
+.password-toggle:hover{opacity:1}
 .btn{width:100%;padding:13px;background:linear-gradient(135deg,#00d4d4,#7c5cbf);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 4px 16px rgba(0,212,212,.3);margin-top:.5rem;transition:all .15s}
 .btn:hover{opacity:.92;transform:translateY(-1px)}
 .div{display:flex;align-items:center;gap:10px;margin:1.25rem 0;color:#b0c4ce;font-size:12px}
@@ -61,4 +65,5 @@ h1{text-align:center;font-size:1.55rem;font-weight:800;color:#1a2332}
   <div class="reg-link">{{ t('no_account') }} <a href="{{ url_for('patient_auth.register') }}">{{ t('create_one_free') }}</a></div>
   <div class="staff-link"><a href="{{ url_for('auth.login') }}">{{ t('staff_login') }}</a></div>
 </div>
+<script src="{{ url_for('static',filename='js/password_toggle.js') }}"></script>
 </body></html>

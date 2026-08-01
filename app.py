@@ -42,6 +42,12 @@ def eat_time_filter(dt, fmt='%H:%M'):
 @app.template_filter('eat_datetime')
 def eat_datetime_filter(dt, fmt='%d %B %Y at %H:%M'):
     return _to_eat(dt, fmt)
+
+@app.template_filter('clean_loc')
+def clean_loc_filter(text):
+    """Normalize location strings for display."""
+    from modules.auth import clean_location_text
+    return clean_location_text(text) if text else ''
 _basedir = os.path.abspath(os.path.dirname(__file__))
 _db_url = os.environ.get('DATABASE_URL', '')
 if not _db_url:

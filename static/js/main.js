@@ -1,4 +1,27 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // Password show/hide eye toggle
+  (function(){
+    document.querySelectorAll('input[type="password"]').forEach(function(input){
+      if (input.dataset.pwWrapped) return;
+      input.dataset.pwWrapped = '1';
+      var wrap = document.createElement('div');
+      wrap.className = 'password-wrap';
+      input.parentNode.insertBefore(wrap, input);
+      wrap.appendChild(input);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'password-toggle';
+      btn.textContent = '👁';
+      btn.setAttribute('aria-label', 'Show password');
+      btn.addEventListener('click', function(){
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.textContent = show ? '🙈' : '👁';
+      });
+      wrap.appendChild(btn);
+    });
+  })();
+
   // Live clock — East African Time (UTC+3)
   const cl = document.getElementById('live-clock');
   if(cl){ const tick=()=>{const n=new Date();cl.textContent=n.toLocaleTimeString('en-GB',{timeZone:'Africa/Nairobi',hour:'2-digit',minute:'2-digit',second:'2-digit'})};tick();setInterval(tick,1000); }

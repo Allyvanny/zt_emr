@@ -170,6 +170,18 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.6;col
 .sidebar.collapsed .sidebar-user{position:relative}
 
 /* ═══════════════════════════════════════════
+   PASSWORD VISIBILITY TOGGLE
+═══════════════════════════════════════════ */
+.password-wrap{position:relative}
+.password-wrap input{padding-right:42px !important}
+.password-toggle{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;font-size:16px;
+  padding:6px;line-height:1;opacity:.55;transition:opacity .15s;
+}
+.password-toggle:hover{opacity:1}
+
+/* ═══════════════════════════════════════════
    LAYOUT
 ═══════════════════════════════════════════ */
 .layout{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column}

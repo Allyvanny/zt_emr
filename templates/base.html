@@ -282,7 +282,7 @@
       <div class="topbar-sub">{% block page_sub %}Electronic Medical Records System{% endblock %}</div>
     </div>
     <div class="topbar-right">
-      <span class="topbar-location" data-location-display style="cursor:pointer" onclick="refreshLocation()" title="Click to refresh location">🌍 {{ current_user.last_location or 'Detecting location...' }}</span>
+      <span class="topbar-location" data-location-display style="cursor:pointer" onclick="refreshLocation()" title="Click to refresh location">🌍 {{ (current_user.last_location or 'Detecting location...')|clean_loc }}</span>
       <span class="badge badge-{{ current_user.role }}">{{ current_user.role|replace('_',' ')|title }}</span>
       <span class="topbar-clock" id="live-clock"></span>
       <div class="theme-toggle" id="theme-toggle" role="button" aria-label="Toggle dark mode" title="Toggle dark / light mode">
