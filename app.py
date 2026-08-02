@@ -90,6 +90,27 @@ def _migrate_schema():
             if 'session_token' not in cols:
                 with db.engine.begin() as conn:
                     conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN session_token VARCHAR(64)'))
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'last_fingerprint' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN last_fingerprint VARCHAR(64)'))
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'last_ip' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN last_ip VARCHAR(45)'))
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'last_device' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN last_device VARCHAR(300)'))
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'last_location' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN last_location VARCHAR(120)'))
+        if insp.has_table('users'):
+            cols = {c['name'] for c in insp.get_columns('users')}
+            if 'last_fingerprint' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE users ADD COLUMN last_fingerprint VARCHAR(64)'))
 
 
 _migrate_schema()

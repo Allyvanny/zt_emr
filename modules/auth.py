@@ -249,8 +249,13 @@ def login():
                 flash(f'Invalid password. {MAX_FAILED - user.failed_attempts} attempt(s) left.','danger')
             db.session.commit(); return render_template('auth/login.html')
         user.failed_attempts = 0
+        # Compute risk against PREVIOUS session's device/IP/fingerprint
+        # BEFORE overwriting them with the current login's values.
+        from modules.ai_engine import compute_risk_score
+        risk = compute_risk_score(user)
         user.last_ip       = request.remote_addr
         user.last_device   = parse_device(request.user_agent.string)
+        user.last_fingerprint = (request.form.get('device_fp') or '').strip()[:64]
         ip_location = get_location(request.remote_addr)
         # Only overwrite last_location with IP data if IP returned something useful,
         # or if the user has no location yet. Never replace a good browser-based
@@ -258,8 +263,6 @@ def login():
         if ip_location not in ('Unknown', 'Localhost') or not user.last_location:
             user.last_location = ip_location
         db.session.commit()
-        from modules.ai_engine import compute_risk_score
-        risk = compute_risk_score(user)
         # Read email config from file directly
         _email_cfg_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'email_config.py')
         _email_cfg = {}

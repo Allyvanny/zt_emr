@@ -2,7 +2,7 @@
 {% block content %}
 <div class="page-header"><div><h2>User Accounts</h2><p class="page-sub">Only admins can create or modify accounts.</p></div><a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">+ Create User</a></div>
 <div class="card"><div class="table-wrap"><table class="data-table">
-<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Email</th><th>Last Login</th><th>Location</th><th>Device</th><th>Status</th><th>Fails</th><th>MFA</th><th>Actions</th></tr></thead>
+<thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Email</th><th>Last Login</th><th>Location</th><th>Device</th><th>Device ID</th><th>Status</th><th>Fails</th><th>MFA</th><th>Actions</th></tr></thead>
 <tbody>{% for u in users %}<tr class="{{ 'row-locked' if u.is_locked else '' }}">
 <td><strong style="color:var(--tx-1)">{{ u.full_name }}</strong></td>
 <td><code>{{ u.username }}</code></td>
@@ -11,6 +11,7 @@
 <td style="font-size:12px">{{ u.last_login|eat if u.last_login else 'Never' }}</td>
 <td style="font-size:12px">{{ u.last_location or '—' }}</td>
 <td style="font-size:11px;max-width:130px;word-break:break-word">{{ u.last_device or '—' }}</td>
+<td style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#8b5cf6">{{ u.last_fingerprint or '—' }}</td>
 <td>{% if u.is_locked %}<span class="badge badge-danger">Locked</span>{% else %}<span class="badge badge-success">Active</span>{% endif %}</td>
 <td>{% if u.failed_attempts > 0 %}<span class="badge badge-warning">{{ u.failed_attempts }}</span>{% else %}<span class="text-muted">0</span>{% endif %}</td>
 <td>{% if u.requires_otp %}<span class="badge badge-warning">Forced</span>{% else %}<span class="text-muted">Auto</span>{% endif %}</td>

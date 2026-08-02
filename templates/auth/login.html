@@ -8,6 +8,7 @@
      
     {% with messages=get_flashed_messages(with_categories=true) %}{% for c,m in messages %}<div class="alert alert-{{ c }}">{{ m }}</div>{% endfor %}{% endwith %}
     <form method="POST" action="{{ url_for('auth.login') }}" autocomplete="off">
+      <input type="hidden" name="device_fp" id="device_fp" value="">
       <div class="form-group"><label>Username</label><input type="text" name="username" placeholder="Enter your username" required autofocus></div>
       <div class="form-group"><label>Password</label><input type="password" name="password" placeholder="Enter your password" required></div>
       <button type="submit" class="btn btn-primary btn-full" style="margin-top:.5rem">Sign In Securely</button>
@@ -23,4 +24,5 @@
   <p style="text-align:center;color:rgba(255,255,255,.2);font-size:11px;margin-top:14px">© 2025 MUST · Alto Dezdel Kiyamba · BCS/25</p>
 </div>
 <script src="{{ url_for('static',filename='js/password_toggle.js') }}"></script>
+<script src="{{ url_for('static',filename='js/device_fp.js') }}"></script>
 </body></html>

@@ -386,6 +386,14 @@ def compute_risk_score(user):
     is_known_ip     = (known_ip and current_ip == known_ip)
     is_daytime      = (7 <= h <= 20)
 
+    # Device fingerprint from client JS (stable per physical device)
+    try:
+        current_fp = (request.form.get('device_fp') or '').strip()[:64]
+    except Exception:
+        current_fp = ''
+    known_fp       = user.last_fingerprint or ''
+    is_known_fp    = bool(known_fp and current_fp and current_fp == known_fp)
+
     # ── Rule-based signals (each contributes to a weighted sum) ─────────
     rule_score = 0.0
     rule_weight = 0.0
@@ -398,6 +406,14 @@ def compute_risk_score(user):
     elif is_known_device:
         rule_score += 0.0
         rule_weight += 0.30
+
+    # Signal 1b: New device fingerprint (weight 0.25) — same physical device check
+    if known_fp and current_fp and not is_known_fp:
+        rule_score += 0.25
+        rule_weight += 0.25
+        reasons.append('New device fingerprint - different physical device than last login')
+    elif is_known_fp:
+        rule_weight += 0.25
 
     # Signal 2: New IP (weight 0.15)
     if not is_known_ip and known_ip:

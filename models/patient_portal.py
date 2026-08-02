@@ -29,6 +29,10 @@ class PatientAccount(db.Model, UserMixin):
     created_at      = db.Column(db.DateTime, default=datetime.utcnow)
     last_login      = db.Column(db.DateTime)
     session_token   = db.Column(db.String(64))
+    last_ip         = db.Column(db.String(45))
+    last_device     = db.Column(db.String(300))
+    last_location   = db.Column(db.String(120))
+    last_fingerprint = db.Column(db.String(64))
 
     # Relationships
     patient         = db.relationship('Patient', foreign_keys=[patient_id], backref='account')

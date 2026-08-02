@@ -99,6 +99,13 @@ def login():
         token = secrets.token_hex(32)
         account.session_token = token
         session['zt_session_token'] = token
+        account.last_ip = request.remote_addr
+        from modules.auth import parse_device, get_location
+        account.last_device = parse_device(request.user_agent.string)
+        account.last_fingerprint = (request.form.get('device_fp') or '').strip()[:64]
+        loc = get_location(request.remote_addr)
+        if loc not in ('Unknown', 'Localhost') or not account.last_location:
+            account.last_location = loc
         login_user(account, remember=True)
         account.last_login = datetime.utcnow()
         db.session.commit()
