@@ -21,6 +21,7 @@
   <a href="{{ url_for('forensics.user_timeline',uid=u.id) }}" class="link-action">Timeline</a>
   {% if u.id != current_user.id %}
   &nbsp;<form method="POST" action="{{ url_for('admin.toggle_lock',uid=u.id) }}" style="display:inline"><button type="submit" class="btn-link {{ 'btn-link-success' if u.is_locked else 'btn-link-danger' }}">{{ 'Unlock' if u.is_locked else 'Lock' }}</button></form>
+  {% if u.last_fingerprint %}&nbsp;<form method="POST" action="{{ url_for('admin.clear_device',uid=u.id) }}" style="display:inline" onsubmit="return confirm('Clear this user\'s device trust? They will need to log in again.')"><button type="submit" class="btn-link btn-link-warning">Clear Device</button></form>{% endif %}
   &nbsp;<form method="POST" action="{{ url_for('admin.force_mfa',uid=u.id) }}" style="display:inline"><button type="submit" class="btn-link btn-link-warning">Force MFA</button></form>
   {% if u.requires_otp %}&nbsp;<form method="POST" action="{{ url_for('admin.clear_mfa',uid=u.id) }}" style="display:inline"><button type="submit" class="btn-link btn-link-success">Clear MFA</button></form>{% endif %}
   {% endif %}

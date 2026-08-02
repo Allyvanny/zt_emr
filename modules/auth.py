@@ -249,6 +249,16 @@ def login():
                 flash(f'Invalid password. {MAX_FAILED - user.failed_attempts} attempt(s) left.','danger')
             db.session.commit(); return render_template('auth/login.html')
         user.failed_attempts = 0
+        # ── Device trust check ──────────────────────────────────────────
+        # If this account already has a registered device fingerprint, only
+        # that same device may sign in. A different/unknown device is blocked.
+        incoming_fp = (request.form.get('device_fp') or '').strip()[:64]
+        known_fp    = user.last_fingerprint or ''
+        if known_fp and incoming_fp != known_fp:
+            log_auth(username,'device_blocked',False,user.id,
+                     f'Unknown device {incoming_fp or "(no fingerprint)"} (known: {known_fp})')
+            flash('Login blocked: unrecognized device. Contact your administrator.','danger')
+            return render_template('auth/login.html')
         # Compute risk against PREVIOUS session's device/IP/fingerprint
         # BEFORE overwriting them with the current login's values.
         from modules.ai_engine import compute_risk_score

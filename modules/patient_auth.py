@@ -95,6 +95,13 @@ def login():
             flash('Invalid username or password.', 'danger')
             return render_template('auth_patient/login.html')
 
+        # ── Device trust check ──────────────────────────────────────────
+        incoming_fp = (request.form.get('device_fp') or '').strip()[:64]
+        known_fp    = account.last_fingerprint or ''
+        if known_fp and incoming_fp != known_fp:
+            flash('Login blocked: unrecognized device. Contact support.', 'danger')
+            return render_template('auth_patient/login.html')
+
         # Simple login — no MFA
         token = secrets.token_hex(32)
         account.session_token = token
@@ -102,7 +109,7 @@ def login():
         account.last_ip = request.remote_addr
         from modules.auth import parse_device, get_location
         account.last_device = parse_device(request.user_agent.string)
-        account.last_fingerprint = (request.form.get('device_fp') or '').strip()[:64]
+        account.last_fingerprint = incoming_fp
         loc = get_location(request.remote_addr)
         if loc not in ('Unknown', 'Localhost') or not account.last_location:
             account.last_location = loc

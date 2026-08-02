@@ -127,3 +127,19 @@ def edit_user(uid):
         return redirect(url_for('admin.user_list'))
 
     return render_template('admin/edit_user.html', u=u, roles=ROLE_LIST, role_labels=ROLE_LABELS)
+
+@admin_bp.route('/users/<int:uid>/clear-device', methods=['POST'])
+@login_required
+@admin_only
+def clear_device(uid):
+    """Reset device trust so the user can sign in from a new device."""
+    u = User.query.get_or_404(uid)
+    u.last_fingerprint = None
+    db.session.add(ActivityLog(
+        user_id=current_user.id, action='clear_device_trust', resource='user',
+        resource_id=u.id, ip_address=request.remote_addr,
+        details=f'Device fingerprint cleared for {u.username} by {current_user.username}'
+    ))
+    db.session.commit()
+    flash(f'Device trust cleared for {u.username}. They can now log in from a new device.','success')
+    return redirect(url_for('admin.user_list'))

@@ -13,6 +13,8 @@
         <div class="info-row"><span class="info-label">Last Login</span><span class="info-value">{{ user.last_login|eat if user.last_login else 'Never' }}</span></div>
         <div class="info-row"><span class="info-label">Last Location</span><span class="info-value">{{ user.last_location or '—' }}</span></div>
         <div class="info-row"><span class="info-label">Last Device</span><span class="info-value">{{ user.last_device or '—' }}</span></div>
+        <div class="info-row"><span class="info-label">Last IP</span><span class="info-value"><code>{{ user.last_ip or '—' }}</code></span></div>
+        <div class="info-row"><span class="info-label">Device ID</span><span class="info-value">{% if user.last_fingerprint %}<code style="font-family:'JetBrains Mono',monospace;color:#8b5cf6">{{ user.last_fingerprint }}</code> <span class="badge badge-success">Trusted</span>{% else %}<span class="badge badge-warning">Not enrolled</span>{% endif %}</span></div>
         <div class="info-row"><span class="info-label">Status</span><span class="info-value">{% if user.is_locked %}<span class="badge badge-danger">Locked</span>{% else %}<span class="badge badge-success">Active</span>{% endif %}</span></div>
         <div class="info-row"><span class="info-label">Failed Attempts</span><span class="info-value">{{ user.failed_attempts }}</span></div>
       </div>
