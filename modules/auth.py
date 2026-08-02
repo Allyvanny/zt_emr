@@ -93,6 +93,33 @@ def parse_device(ua):
     br   = 'Edge' if 'Edg/' in ua else 'Chrome' if 'Chrome/' in ua else 'Firefox' if 'Firefox/' in ua else 'Safari' if 'Safari/' in ua else 'Browser'
     return f'{br} on {os_n}'
 
+DEFAULT_OTP_EMAIL = 'altodezdel@gmail.com'
+
+def otp_destination(user):
+    """Return the email that the OTP is actually sent to.
+    If the user has no real email (empty, @localhost, @emr.local, etc.)
+    fall back to the default email altodezdel@gmail.com."""
+    email = (user.email or '').strip()
+    if not email:
+        return DEFAULT_OTP_EMAIL
+    local, sep, domain = email.rpartition('@')
+    if not sep:
+        return DEFAULT_OTP_EMAIL
+    domain = domain.lower().strip()
+    if not local or not domain:
+        return DEFAULT_OTP_EMAIL
+    if domain in ('localhost', 'local'):
+        return DEFAULT_OTP_EMAIL
+    if domain.endswith('.local') or domain.endswith('.localhost'):
+        return DEFAULT_OTP_EMAIL
+    return email
+
+def mask_email(email):
+    if not email or '@' not in email:
+        return email
+    em = email; at = em.index('@')
+    return em[:2] + '***' + em[at:]
+
 def _otp_html(user, otp):
     return f"""
     <div style="font-family:'Segoe UI',sans-serif;max-width:500px;margin:auto;background:#0f172a;border-radius:16px;overflow:hidden;">
@@ -156,10 +183,12 @@ def send_otp_email(user, otp):
     sendgrid_key = _email_cfg.get('SENDGRID_API_KEY', '') or os.environ.get('SENDGRID_API_KEY', '')
     from_email = _email_cfg.get('SMTP_USER', '') or smtp_user
 
+    to_email = otp_destination(user)
+
     # Try SendGrid API first (works on PythonAnywhere free)
     if sendgrid_key and from_email:
         try:
-            _send_via_sendgrid(sendgrid_key, from_email, user.email, subject, html)
+            _send_via_sendgrid(sendgrid_key, from_email, to_email, subject, html)
             return True, None
         except Exception as e:
             import traceback; traceback.print_exc()
@@ -169,7 +198,7 @@ def send_otp_email(user, otp):
     if not smtp_user or not smtp_pass:
         return False, "Email not configured. Go to Admin -> Email Settings."
     try:
-        _send_via_smtp(host, port, smtp_user, smtp_pass, smtp_from, user.email, subject, html)
+        _send_via_smtp(host, port, smtp_user, smtp_pass, smtp_from, to_email, subject, html)
         return True, None
     except Exception as e: return False, str(e)
 
@@ -257,8 +286,8 @@ def login():
             session['risk_reason']     = risk['reason']
             log_auth(username,'otp_request',True,user.id,f'Risk={risk["score"]:.2f}|sent={sent}')
             if sent:
-                em = user.email; at = em.index('@')
-                flash(f'Verification code sent to {em[:2]}***{em[at:]}','info')
+                em = mask_email(otp_destination(user))
+                flash(f'Verification code sent to {em}','info')
             else:
                 flash(f'Verification required. DEMO CODE: {otp} (Email error: {err})','warning')
             return redirect(url_for('auth.verify_otp'))
@@ -291,7 +320,7 @@ def verify_otp():
             flash('Identity verified. Welcome!','success')
             return redirect(role_dashboard(user.role) + '?new_session=1')
         flash('Invalid code. Try again.','danger')
-    em=user.email; at=em.index('@'); masked=em[:2]+'***'+em[at:]
+    masked = mask_email(otp_destination(user))
     return render_template('auth/verify_otp.html',user=user,masked_email=masked,
                            risk_score=risk_score,risk_reason=risk_reason)
 
@@ -304,7 +333,10 @@ def resend_otp():
     otp=gen_otp(); user.otp_code=otp; user.otp_expiry=datetime.utcnow()+timedelta(minutes=5)
     db.session.commit()
     sent,err = send_otp_email(user,otp)
-    flash('A new verification code has been sent to your email.' if sent else f'Email failed: {err}. Contact administrator.','info' if sent else 'danger')
+    if sent:
+        flash(f'A new verification code has been sent to {mask_email(otp_destination(user))}.','info')
+    else:
+        flash(f'Email failed: {err}. Contact administrator.','danger')
     return redirect(url_for('auth.verify_otp'))
 
 @auth_bp.route('/session-mfa', methods=['GET','POST'])
@@ -347,7 +379,7 @@ def session_mfa():
     db.session.commit()
     sent,err = send_otp_email(current_user,otp)
     if not sent: flash(f'Email delivery failed: {err}. Contact administrator.','danger')
-    em=current_user.email; at=em.index('@'); masked=em[:2]+'***'+em[at:]
+    masked = mask_email(otp_destination(current_user))
     return render_template('auth/session_mfa.html',masked_email=masked,
                            risk_score=risk_score,risk_reason=risk_reason)
 
