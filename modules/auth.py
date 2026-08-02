@@ -4,7 +4,7 @@ from models.user import User
 from models.logs import ActivityLog, RiskLog, AuthenticationLog
 from extensions import db
 from datetime import datetime, timedelta
-import random, string, smtplib, os, json
+import random, string, smtplib, os, json, secrets
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -22,6 +22,14 @@ def _get_smtp_cfg():
     return _m.SMTP_HOST, _m.SMTP_PORT, _m.SMTP_USER, _m.SMTP_PASS, _m.SMTP_FROM
 
 def gen_otp(): return ''.join(random.choices(string.digits, k=6))
+
+def issue_session_token(user):
+    """Create a fresh session token, store it in DB and Flask session.
+    Any older device still holding a previous token is invalidated."""
+    token = secrets.token_hex(32)
+    user.session_token = token
+    session['zt_session_token'] = token
+    return token
 
 def clean_location_text(text):
     """Server-side location cleanup. Normalizes location strings so the same
@@ -254,7 +262,7 @@ def login():
             else:
                 flash(f'Verification required. DEMO CODE: {otp} (Email error: {err})','warning')
             return redirect(url_for('auth.verify_otp'))
-        login_user(user); user.last_login = datetime.utcnow(); db.session.commit()
+        login_user(user); user.last_login = datetime.utcnow(); issue_session_token(user); db.session.commit()
         log_auth(username,'login',True,user.id,f'Direct|{user.last_device}|{user.last_location}')
         log_act(user.id,'session_start',details=f'{user.last_location} via {user.last_device}')
         return redirect(role_dashboard(user.role) + '?new_session=1')
@@ -277,7 +285,7 @@ def verify_otp():
             # DON'T clear requires_otp — if admin forced it, keep it for every login
             db.session.commit()
             [session.pop(k,None) for k in ['pending_user_id','risk_score','risk_reason']]
-            login_user(user)
+            login_user(user); issue_session_token(user); db.session.commit()
             log_auth(user.username,'otp_success',True,user.id)
             log_act(user.id,'session_start',details=f'MFA|{user.last_location}|{user.last_device}')
             flash('Identity verified. Welcome!','success')

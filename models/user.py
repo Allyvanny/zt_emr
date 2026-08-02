@@ -25,6 +25,7 @@ class User(db.Model, UserMixin):
     last_ip         = db.Column(db.String(45))
     last_device     = db.Column(db.String(300))
     last_location   = db.Column(db.String(120))
+    session_token   = db.Column(db.String(64))
 
     activity_logs = db.relationship('ActivityLog', backref='user', lazy=True, foreign_keys='ActivityLog.user_id')
     risk_logs     = db.relationship('RiskLog',     backref='user', lazy=True, foreign_keys='RiskLog.user_id')

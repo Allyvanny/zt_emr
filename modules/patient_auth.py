@@ -8,6 +8,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from models.patient_portal import PatientAccount
 from extensions import db
 from datetime import datetime, date
+import secrets
 
 patient_auth_bp = Blueprint('patient_auth', __name__)
 
@@ -95,6 +96,9 @@ def login():
             return render_template('auth_patient/login.html')
 
         # Simple login — no MFA
+        token = secrets.token_hex(32)
+        account.session_token = token
+        session['zt_session_token'] = token
         login_user(account, remember=True)
         account.last_login = datetime.utcnow()
         db.session.commit()

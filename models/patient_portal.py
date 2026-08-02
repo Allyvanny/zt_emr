@@ -28,6 +28,7 @@ class PatientAccount(db.Model, UserMixin):
     assigned_doctor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     created_at      = db.Column(db.DateTime, default=datetime.utcnow)
     last_login      = db.Column(db.DateTime)
+    session_token   = db.Column(db.String(64))
 
     # Relationships
     patient         = db.relationship('Patient', foreign_keys=[patient_id], backref='account')

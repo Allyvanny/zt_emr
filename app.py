@@ -3,7 +3,7 @@ Zero Trust Security System for EMR
 Author: Alto Dezdel Kiyamba | MUST BCS/25 | Reg: 23100533350059
 Supervisor: Ms. Prisca Maro
 """
-from flask import Flask, redirect, url_for, send_from_directory
+from flask import Flask, redirect, url_for, send_from_directory, session, flash
 from extensions import db, login_manager
 from datetime import datetime, timezone, timedelta
 import os
@@ -74,6 +74,26 @@ db.init_app(app)
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 
+
+def _migrate_schema():
+    """Add columns introduced after initial deploy without breaking existing DBs."""
+    from sqlalchemy import inspect, text
+    with app.app_context():
+        insp = inspect(db.engine)
+        if insp.has_table('users'):
+            cols = {c['name'] for c in insp.get_columns('users')}
+            if 'session_token' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE users ADD COLUMN session_token VARCHAR(64)'))
+        if insp.has_table('patient_accounts'):
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'session_token' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN session_token VARCHAR(64)'))
+
+
+_migrate_schema()
+
 @login_manager.user_loader
 def load_user(user_id):
     """
@@ -88,6 +108,28 @@ def load_user(user_id):
     else:
         from models.user import User
         return User.query.get(int(user_id))
+
+
+@app.before_request
+def enforce_single_session():
+    """One active login per account: a newer login invalidates all older sessions."""
+    from flask_login import current_user, logout_user
+    if not current_user.is_authenticated:
+        return
+    uid = current_user.get_id()
+    db_token = getattr(current_user, 'session_token', None)
+    if db_token and session.get('zt_session_token') != db_token:
+        try:
+            if not str(uid).startswith('patient_'):
+                from modules.auth import log_act
+                log_act(current_user.id, 'session_kicked', details='Superseded by a newer login on another device')
+        except Exception:
+            pass
+        logout_user()
+        flash('Signed out: this account was just logged in from another device.', 'warning')
+        if str(uid).startswith('patient_'):
+            return redirect(url_for('patient_auth.login'))
+        return redirect(url_for('auth.login'))
 
 # Load saved email config
 email_config_path = os.path.join(os.path.dirname(__file__), 'email_config.py')
