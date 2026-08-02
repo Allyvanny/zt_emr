@@ -12,6 +12,11 @@
   <div class="otp-info-box"><strong>🔐 Code sent to:</strong><br><span style="font-family:'JetBrains Mono',monospace;font-size:14px">{{ masked_email }}</span><br><span style="font-size:12px;margin-top:4px;display:block">Enter 6-digit code below. Expires in 5 minutes.</span></div>
   <form method="POST" action="{{ url_for('auth.verify_otp') }}">
     <div class="otp-input-wrap"><input type="text" name="otp" class="otp-input" maxlength="6" placeholder="——————" required autofocus autocomplete="off" inputmode="numeric"></div>
+    {% if is_new_device %}
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx-2);margin:.9rem 0 .2rem;cursor:pointer">
+      <input type="checkbox" name="remember_device" checked style="width:16px;height:16px;accent-color:#6366f1"> Trust this device for {{ 30 }} days (skip OTP on next login)
+    </label>
+    {% endif %}
     <div class="otp-timer">Expires in <strong id="countdown">5:00</strong></div>
     <button type="submit" class="btn btn-primary btn-full">✓ Verify Identity</button>
   </form>

@@ -42,6 +42,9 @@ h1{text-align:center;font-size:1.55rem;font-weight:800;color:#1a2332}
 
   <form method="POST">
     <div class="fg"><label>Verification Code</label><input type="text" name="otp" placeholder="6-digit code" maxlength="6" required autofocus style="text-align:center;letter-spacing:.4em;font-weight:700"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3d5166;cursor:pointer;margin:0 0 .2rem">
+      <input type="checkbox" name="remember_device" checked style="width:16px;height:16px;accent-color:#00d4d4"> Trust this device for 30 days (skip OTP on next login)
+    </label>
     <button type="submit" class="btn">Approve Device</button>
   </form>
   <div style="text-align:center">

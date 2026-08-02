@@ -94,6 +94,22 @@ def parse_device(ua):
     return f'{br} on {os_n}'
 
 DEFAULT_OTP_EMAIL = 'altodezdel@gmail.com'
+DEVICE_TRUST_DAYS = 30
+
+def device_is_trusted(user, incoming_fp):
+    """A device is trusted if its fingerprint matches AND it was approved within
+    the last 30 days. Fingerprints approved before this feature (no timestamp)
+    are grandfathered as trusted."""
+    known_fp = (user.last_fingerprint or '')
+    if not known_fp or not incoming_fp or incoming_fp != known_fp:
+        return False
+    at = getattr(user, 'last_fingerprint_at', None)
+    if at is None:
+        return True
+    try:
+        return datetime.utcnow() - at < timedelta(days=DEVICE_TRUST_DAYS)
+    except Exception:
+        return False
 
 def otp_destination(user):
     """Return the email that the OTP is actually sent to.
@@ -255,18 +271,22 @@ def login():
         # through the normal (risk-based) MFA flow.
         incoming_fp = (request.form.get('device_fp') or '').strip()[:64]
         known_fp    = user.last_fingerprint or ''
-        is_known_device = bool(known_fp) and incoming_fp == known_fp
-        new_device      = bool(known_fp) and incoming_fp != known_fp
+        # First-ever device, or a device not approved within the last 30 days,
+        # must be approved via OTP before it can log in / be remembered.
+        new_device  = bool(incoming_fp) and (not known_fp or not device_is_trusted(user, incoming_fp))
         if new_device:
             log_auth(username,'unknown_device',True,user.id,
-                     f'Unknown device {incoming_fp or "(no fingerprint)"} (known: {known_fp}) - OTP required')
+                     f'Unknown/expired device {incoming_fp or "(no fingerprint)"} (known: {known_fp}) - OTP required')
         # Compute risk against PREVIOUS session's device/IP/fingerprint
         # BEFORE overwriting them with the current login's values.
         from modules.ai_engine import compute_risk_score
         risk = compute_risk_score(user)
         user.last_ip       = request.remote_addr
         user.last_device   = parse_device(request.user_agent.string)
-        user.last_fingerprint = (request.form.get('device_fp') or '').strip()[:64]
+        # Don't overwrite last_fingerprint for a NEW device until OTP approval —
+        # otherwise a session-only (unremembered) approval would still enroll it.
+        if not new_device:
+            user.last_fingerprint = incoming_fp
         ip_location = get_location(request.remote_addr)
         # Only overwrite last_location with IP data if IP returned something useful,
         # or if the user has no location yet. Never replace a good browser-based
@@ -314,7 +334,12 @@ def login():
                 else:
                     flash(f'Verification required. DEMO CODE: {otp} (Email error: {err})','warning')
             return redirect(url_for('auth.verify_otp'))
-        login_user(user); user.last_login = datetime.utcnow(); issue_session_token(user); db.session.commit()
+        login_user(user); user.last_login = datetime.utcnow(); issue_session_token(user)
+        # Trusted (known) device — refresh the 30-day trust window on each login,
+        # so a grandfathered device (null timestamp) starts expiring too.
+        if incoming_fp and incoming_fp == user.last_fingerprint:
+            user.last_fingerprint_at = datetime.utcnow()
+        db.session.commit()
         log_auth(username,'login',True,user.id,f'Direct|{user.last_device}|{user.last_location}')
         log_act(user.id,'session_start',details=f'{user.last_location} via {user.last_device}')
         return redirect(role_dashboard(user.role) + '?new_session=1')
@@ -334,12 +359,21 @@ def verify_otp():
             session.pop('pending_user_id',None); return redirect(url_for('auth.login'))
         if entered == user.otp_code:
             user.otp_verified=True; user.last_login=datetime.utcnow()
-            # If this login came from a NEW device, approve + enroll it now
+            # If this login came from a NEW device, approve + enroll it now.
+            # "Remember for 30 days" (default ON) stores the fingerprint and
+            # timestamp so repeat logins skip OTP. Off = session-only: the
+            # device is NOT remembered and OTP will be required again.
             pending_fp = session.get('pending_new_device')
+            remember = request.form.get('remember_device') != 'off'
             if pending_fp:
-                user.last_fingerprint = pending_fp
-                log_auth(user.username,'device_approved',True,user.id,
-                         f'New device approved via OTP: {pending_fp}')
+                if remember:
+                    user.last_fingerprint = pending_fp
+                    user.last_fingerprint_at = datetime.utcnow()
+                    log_auth(user.username,'device_approved',True,user.id,
+                             f'New device approved via OTP: {pending_fp} (trusted {DEVICE_TRUST_DAYS} days)')
+                else:
+                    log_auth(user.username,'device_session_only',True,user.id,
+                             f'New device {pending_fp} verified but NOT remembered (OTP required next time)')
             # DON'T clear requires_otp — if admin forced it, keep it for every login
             db.session.commit()
             [session.pop(k,None) for k in ['pending_user_id','risk_score','risk_reason','pending_new_device']]
@@ -351,7 +385,8 @@ def verify_otp():
         flash('Invalid code. Try again.','danger')
     masked = mask_email(otp_destination(user))
     return render_template('auth/verify_otp.html',user=user,masked_email=masked,
-                           risk_score=risk_score,risk_reason=risk_reason)
+                           risk_score=risk_score,risk_reason=risk_reason,
+                           is_new_device=bool(session.get('pending_new_device')))
 
 @auth_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():

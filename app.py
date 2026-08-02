@@ -114,11 +114,20 @@ def _migrate_schema():
             if 'otp_expiry' not in cols:
                 with db.engine.begin() as conn:
                     conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN otp_expiry DATETIME'))
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'last_fingerprint_at' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN last_fingerprint_at DATETIME'))
         if insp.has_table('users'):
             cols = {c['name'] for c in insp.get_columns('users')}
             if 'last_fingerprint' not in cols:
                 with db.engine.begin() as conn:
                     conn.execute(text('ALTER TABLE users ADD COLUMN last_fingerprint VARCHAR(64)'))
+        if insp.has_table('users'):
+            cols = {c['name'] for c in insp.get_columns('users')}
+            if 'last_fingerprint_at' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE users ADD COLUMN last_fingerprint_at DATETIME'))
 
 
 _migrate_schema()

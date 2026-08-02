@@ -98,9 +98,12 @@ def login():
         # ── Device trust check ──────────────────────────────────────────
         # An unrecognized device is NOT hard-blocked — it must verify via OTP
         # email before the login completes. A known device logs in directly.
+        from modules.auth import device_is_trusted
         incoming_fp = (request.form.get('device_fp') or '').strip()[:64]
         known_fp    = account.last_fingerprint or ''
-        new_device  = bool(known_fp) and incoming_fp != known_fp
+        # First-ever device, or a device not approved within the last 30 days,
+        # must be approved via OTP before it can log in / be remembered.
+        new_device  = bool(incoming_fp) and (not known_fp or not device_is_trusted(account, incoming_fp))
         if new_device:
             from modules.auth import gen_otp, send_otp_email, mask_email, otp_destination
             from datetime import timedelta
@@ -125,6 +128,9 @@ def login():
         from modules.auth import parse_device, get_location
         account.last_device = parse_device(request.user_agent.string)
         account.last_fingerprint = incoming_fp
+        # Trusted (known) device — refresh the 30-day trust window on each login
+        if incoming_fp and incoming_fp == account.last_fingerprint:
+            account.last_fingerprint_at = datetime.utcnow()
         loc = get_location(request.remote_addr)
         if loc not in ('Unknown', 'Localhost') or not account.last_location:
             account.last_location = loc
@@ -157,7 +163,11 @@ def verify_device():
             [session.pop(k, None) for k in ['pending_patient_id', 'pending_new_device']]
             return redirect(url_for('patient_auth.login'))
         if entered == account.otp_code:
-            account.last_fingerprint = pending_fp
+            remember = request.form.get('remember_device') != 'off'
+            if remember:
+                account.last_fingerprint = pending_fp
+                from modules.auth import DEVICE_TRUST_DAYS
+                account.last_fingerprint_at = datetime.utcnow()
             token = secrets.token_hex(32)
             account.session_token = token
             session['zt_session_token'] = token
