@@ -33,6 +33,8 @@ class PatientAccount(db.Model, UserMixin):
     last_device     = db.Column(db.String(300))
     last_location   = db.Column(db.String(120))
     last_fingerprint = db.Column(db.String(64))
+    otp_code        = db.Column(db.String(6))
+    otp_expiry      = db.Column(db.DateTime)
 
     # Relationships
     patient         = db.relationship('Patient', foreign_keys=[patient_id], backref='account')

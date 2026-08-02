@@ -250,15 +250,16 @@ def login():
             db.session.commit(); return render_template('auth/login.html')
         user.failed_attempts = 0
         # ── Device trust check ──────────────────────────────────────────
-        # If this account already has a registered device fingerprint, only
-        # that same device may sign in. A different/unknown device is blocked.
+        # An unrecognized device is NOT hard-blocked — it must instead verify
+        # via OTP email before the login completes. A known device continues
+        # through the normal (risk-based) MFA flow.
         incoming_fp = (request.form.get('device_fp') or '').strip()[:64]
         known_fp    = user.last_fingerprint or ''
-        if known_fp and incoming_fp != known_fp:
-            log_auth(username,'device_blocked',False,user.id,
-                     f'Unknown device {incoming_fp or "(no fingerprint)"} (known: {known_fp})')
-            flash('Login blocked: unrecognized device. Contact your administrator.','danger')
-            return render_template('auth/login.html')
+        is_known_device = bool(known_fp) and incoming_fp == known_fp
+        new_device      = bool(known_fp) and incoming_fp != known_fp
+        if new_device:
+            log_auth(username,'unknown_device',True,user.id,
+                     f'Unknown device {incoming_fp or "(no fingerprint)"} (known: {known_fp}) - OTP required')
         # Compute risk against PREVIOUS session's device/IP/fingerprint
         # BEFORE overwriting them with the current login's values.
         from modules.ai_engine import compute_risk_score
@@ -288,7 +289,8 @@ def login():
         # First-time login: always require OTP
         # Risk-based MFA: only if email is configured
         is_first_login = user.last_login is None
-        should_mfa = user.requires_otp or is_first_login or (email_configured and risk['score'] >= 0.35)
+        should_mfa = (user.requires_otp or is_first_login or new_device
+                      or (email_configured and risk['score'] >= 0.35))
         if should_mfa:
             otp = gen_otp()
             user.otp_code = otp; user.otp_expiry = datetime.utcnow()+timedelta(minutes=5); user.otp_verified=False
@@ -297,12 +299,20 @@ def login():
             session['pending_user_id'] = user.id
             session['risk_score']      = risk['score']
             session['risk_reason']     = risk['reason']
-            log_auth(username,'otp_request',True,user.id,f'Risk={risk["score"]:.2f}|sent={sent}')
-            if sent:
-                em = mask_email(otp_destination(user))
-                flash(f'Verification code sent to {em}','info')
+            if new_device:
+                session['pending_new_device'] = incoming_fp
+                if sent:
+                    em = mask_email(otp_destination(user))
+                    flash(f'New device detected — a verification code has been sent to {em} to approve it.','info')
+                else:
+                    flash(f'New device detected — verification required. DEMO CODE: {otp} (Email error: {err})','warning')
             else:
-                flash(f'Verification required. DEMO CODE: {otp} (Email error: {err})','warning')
+                log_auth(username,'otp_request',True,user.id,f'Risk={risk["score"]:.2f}|sent={sent}')
+                if sent:
+                    em = mask_email(otp_destination(user))
+                    flash(f'Verification code sent to {em}','info')
+                else:
+                    flash(f'Verification required. DEMO CODE: {otp} (Email error: {err})','warning')
             return redirect(url_for('auth.verify_otp'))
         login_user(user); user.last_login = datetime.utcnow(); issue_session_token(user); db.session.commit()
         log_auth(username,'login',True,user.id,f'Direct|{user.last_device}|{user.last_location}')
@@ -324,9 +334,15 @@ def verify_otp():
             session.pop('pending_user_id',None); return redirect(url_for('auth.login'))
         if entered == user.otp_code:
             user.otp_verified=True; user.last_login=datetime.utcnow()
+            # If this login came from a NEW device, approve + enroll it now
+            pending_fp = session.get('pending_new_device')
+            if pending_fp:
+                user.last_fingerprint = pending_fp
+                log_auth(user.username,'device_approved',True,user.id,
+                         f'New device approved via OTP: {pending_fp}')
             # DON'T clear requires_otp — if admin forced it, keep it for every login
             db.session.commit()
-            [session.pop(k,None) for k in ['pending_user_id','risk_score','risk_reason']]
+            [session.pop(k,None) for k in ['pending_user_id','risk_score','risk_reason','pending_new_device']]
             login_user(user); issue_session_token(user); db.session.commit()
             log_auth(user.username,'otp_success',True,user.id)
             log_act(user.id,'session_start',details=f'MFA|{user.last_location}|{user.last_device}')

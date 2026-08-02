@@ -106,6 +106,14 @@ def _migrate_schema():
             if 'last_location' not in cols:
                 with db.engine.begin() as conn:
                     conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN last_location VARCHAR(120)'))
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'otp_code' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN otp_code VARCHAR(6)'))
+            cols = {c['name'] for c in insp.get_columns('patient_accounts')}
+            if 'otp_expiry' not in cols:
+                with db.engine.begin() as conn:
+                    conn.execute(text('ALTER TABLE patient_accounts ADD COLUMN otp_expiry DATETIME'))
         if insp.has_table('users'):
             cols = {c['name'] for c in insp.get_columns('users')}
             if 'last_fingerprint' not in cols:

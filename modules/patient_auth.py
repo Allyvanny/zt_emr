@@ -96,13 +96,28 @@ def login():
             return render_template('auth_patient/login.html')
 
         # ── Device trust check ──────────────────────────────────────────
+        # An unrecognized device is NOT hard-blocked — it must verify via OTP
+        # email before the login completes. A known device logs in directly.
         incoming_fp = (request.form.get('device_fp') or '').strip()[:64]
         known_fp    = account.last_fingerprint or ''
-        if known_fp and incoming_fp != known_fp:
-            flash('Login blocked: unrecognized device. Contact support.', 'danger')
-            return render_template('auth_patient/login.html')
+        new_device  = bool(known_fp) and incoming_fp != known_fp
+        if new_device:
+            from modules.auth import gen_otp, send_otp_email, mask_email, otp_destination
+            from datetime import timedelta
+            otp = gen_otp()
+            account.otp_code = otp; account.otp_expiry = datetime.utcnow()+timedelta(minutes=5)
+            db.session.commit()
+            sent, err = send_otp_email(account, otp)
+            session['pending_patient_id'] = account.id
+            session['pending_new_device'] = incoming_fp
+            if sent:
+                em = mask_email(otp_destination(account))
+                flash(f'New device detected — a verification code has been sent to {em} to approve it.', 'info')
+            else:
+                flash(f'New device detected — verification required. DEMO CODE: {otp} (Email error: {err})', 'warning')
+            return redirect(url_for('patient_auth.verify_device'))
 
-        # Simple login — no MFA
+        # Simple login — no MFA for known devices
         token = secrets.token_hex(32)
         account.session_token = token
         session['zt_session_token'] = token
@@ -122,6 +137,68 @@ def login():
 
     return render_template('auth_patient/login.html')
 
+
+@patient_auth_bp.route('/patient/verify-device', methods=['GET', 'POST'])
+def verify_device():
+    """Patient verifies a new device via OTP email before enrollment."""
+    from datetime import timedelta
+    pid = session.get('pending_patient_id')
+    if not pid:
+        return redirect(url_for('patient_auth.login'))
+    account = PatientAccount.query.get(pid)
+    if not account:
+        session.pop('pending_patient_id', None)
+        return redirect(url_for('patient_auth.login'))
+    pending_fp = session.get('pending_new_device', '')
+    if request.method == 'POST':
+        entered = request.form.get('otp', '').strip()
+        if account.otp_expiry and datetime.utcnow() > account.otp_expiry:
+            flash('Code expired. Please log in again.', 'danger')
+            [session.pop(k, None) for k in ['pending_patient_id', 'pending_new_device']]
+            return redirect(url_for('patient_auth.login'))
+        if entered == account.otp_code:
+            account.last_fingerprint = pending_fp
+            token = secrets.token_hex(32)
+            account.session_token = token
+            session['zt_session_token'] = token
+            account.last_ip = request.remote_addr
+            from modules.auth import parse_device, get_location
+            account.last_device = parse_device(request.user_agent.string)
+            loc = get_location(request.remote_addr)
+            if loc not in ('Unknown', 'Localhost') or not account.last_location:
+                account.last_location = loc
+            login_user(account, remember=True)
+            account.last_login = datetime.utcnow()
+            db.session.commit()
+            [session.pop(k, None) for k in ['pending_patient_id', 'pending_new_device']]
+            flash(f'Device approved. Welcome back, {account.full_name}!', 'success')
+            return redirect(url_for('patient_portal.dashboard'))
+        flash('Invalid code. Try again.', 'danger')
+    from modules.auth import mask_email, otp_destination
+    masked = mask_email(otp_destination(account))
+    return render_template('auth_patient/verify_device.html', masked_email=masked,
+                           account=account)
+
+
+@patient_auth_bp.route('/patient/resend-device-otp', methods=['POST'])
+def resend_device_otp():
+    from datetime import timedelta
+    pid = session.get('pending_patient_id')
+    if not pid:
+        return redirect(url_for('patient_auth.login'))
+    account = PatientAccount.query.get(pid)
+    if not account:
+        return redirect(url_for('patient_auth.login'))
+    from modules.auth import gen_otp, send_otp_email, mask_email, otp_destination
+    otp = gen_otp()
+    account.otp_code = otp; account.otp_expiry = datetime.utcnow()+timedelta(minutes=5)
+    db.session.commit()
+    sent, err = send_otp_email(account, otp)
+    if sent:
+        flash(f'A new verification code has been sent to {mask_email(otp_destination(account))}.', 'info')
+    else:
+        flash(f'Email failed: {err}. Contact support.', 'danger')
+    return redirect(url_for('patient_auth.verify_device'))
 
 @patient_auth_bp.route('/patient/logout')
 def logout():
