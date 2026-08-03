@@ -450,9 +450,14 @@ def session_mfa():
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    reason = request.args.get('reason', '')
     log_act(current_user.id,'session_end',details='Logged out')
     log_auth(current_user.username,'logout',True,current_user.id)
-    logout_user(); flash('Signed out securely.','info')
+    logout_user()
+    if reason == 'idle':
+        flash('Signed out after 5 minutes of inactivity. Please sign in again.', 'warning')
+    else:
+        flash('Signed out securely.','info')
     return redirect(url_for('auth.login'))
 
 

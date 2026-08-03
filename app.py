@@ -3,13 +3,16 @@ Zero Trust Security System for EMR
 Author: Alto Dezdel Kiyamba | MUST BCS/25 | Reg: 23100533350059
 Supervisor: Ms. Prisca Maro
 """
-from flask import Flask, redirect, url_for, send_from_directory, session, flash
+from flask import Flask, redirect, url_for, send_from_directory, session, flash, request
 from extensions import db, login_manager
 from datetime import datetime, timezone, timedelta
 import os
 
 app = Flask(__name__)
 app.secret_key = os.urandom(32)
+
+# Idle session timeout: after this many minutes of no activity the user must sign in again.
+IDLE_TIMEOUT_MINUTES = 5
 
 # East African Time (EAT) = UTC+3
 EAT = timezone(timedelta(hours=3))
@@ -168,6 +171,31 @@ def enforce_single_session():
         if str(uid).startswith('patient_'):
             return redirect(url_for('patient_auth.login'))
         return redirect(url_for('auth.login'))
+
+
+@app.before_request
+def enforce_idle_timeout():
+    """Require re-authentication after IDLE_TIMEOUT_MINUTES of no activity."""
+    from flask_login import current_user, logout_user
+    if not current_user.is_authenticated:
+        return
+    if request.path.startswith('/static/'):
+        return
+    now = datetime.utcnow()
+    last = session.get('_last_activity')
+    if last:
+        try:
+            last_dt = datetime.fromisoformat(last)
+            if (now - last_dt).total_seconds() > IDLE_TIMEOUT_MINUTES * 60:
+                uid = current_user.get_id()
+                logout_user()
+                flash('Your session expired after {} minutes of inactivity. Please sign in again.'.format(IDLE_TIMEOUT_MINUTES), 'warning')
+                if str(uid).startswith('patient_'):
+                    return redirect(url_for('patient_auth.login'))
+                return redirect(url_for('auth.login'))
+        except Exception:
+            pass
+    session['_last_activity'] = now.isoformat()
 
 # Load saved email config
 email_config_path = os.path.join(os.path.dirname(__file__), 'email_config.py')

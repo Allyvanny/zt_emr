@@ -212,8 +212,12 @@ def resend_device_otp():
 
 @patient_auth_bp.route('/patient/logout')
 def logout():
+    reason = request.args.get('reason', '')
     logout_user()
-    flash('You have been signed out.', 'info')
+    if reason == 'idle':
+        flash('Signed out after 5 minutes of inactivity. Please sign in again.', 'warning')
+    else:
+        flash('You have been signed out.', 'info')
     return redirect(url_for('patient_auth.login'))
 
 

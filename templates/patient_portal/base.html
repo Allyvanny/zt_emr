@@ -191,7 +191,7 @@ code{background:rgba(0,212,212,.08);border:1px solid rgba(0,212,212,.15);padding
 @media(min-width:640px){.lang-switch a{padding:5px 12px;font-size:11px}}
 </style>
 </head>
-<body>
+<body{% if current_user.is_authenticated %} data-idle-logout="{{ url_for('patient_auth.logout') }}" data-idle-minutes="5"{% endif %}>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <aside class="sidebar" id="sidebar">
   <div class="brand">
@@ -300,6 +300,25 @@ document.querySelectorAll('.alert').forEach(a=>{setTimeout(()=>{a.style.transiti
   window.addEventListener('resize', function(){
     if(window.innerWidth >= 960) closeSidebar();
   });
+})();
+
+// Idle session timeout — sign the patient out after N minutes of no activity.
+(function(){
+  const logoutUrl = document.body.getAttribute('data-idle-logout');
+  const minutes = parseInt(document.body.getAttribute('data-idle-minutes'), 10) || 5;
+  if(!logoutUrl) return;
+  let timer = null;
+  function resetIdle(){
+    if(timer) clearTimeout(timer);
+    timer = setTimeout(function(){
+      const sep = logoutUrl.indexOf('?') === -1 ? '?' : '&';
+      window.location.href = logoutUrl + sep + 'reason=idle';
+    }, minutes * 60 * 1000);
+  }
+  ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(ev=>{
+    document.addEventListener(ev, resetIdle, {passive:true});
+  });
+  resetIdle();
 })();
 </script>
 {% block extra_js %}{% endblock %}

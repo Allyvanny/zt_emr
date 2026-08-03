@@ -35,3 +35,24 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('form[action*="force-mfa"]').forEach(f=>f.addEventListener('submit',e=>{if(!confirm('Force MFA on next login?'))e.preventDefault()}));
   document.querySelectorAll('form[action*="cancel"]').forEach(f=>f.addEventListener('submit',e=>{if(!confirm('Cancel this item?'))e.preventDefault()}));
 });
+
+// Idle session timeout — sign the user out after N minutes of no activity.
+(function(){
+  var body = document.body;
+  var logoutUrl = body ? body.getAttribute('data-idle-logout') : null;
+  var minutes = parseInt(body && body.getAttribute('data-idle-minutes'), 10) || 5;
+  if(!logoutUrl) return;
+  var IDLE_MS = minutes * 60 * 1000;
+  var timer = null;
+  function resetIdle(){
+    if(timer) clearTimeout(timer);
+    timer = setTimeout(function(){
+      var sep = logoutUrl.indexOf('?') === -1 ? '?' : '&';
+      window.location.href = logoutUrl + sep + 'reason=idle';
+    }, IDLE_MS);
+  }
+  ['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(function(ev){
+    document.addEventListener(ev, resetIdle, {passive:true});
+  });
+  resetIdle();
+})();
