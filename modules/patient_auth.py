@@ -135,6 +135,7 @@ def login():
         if loc not in ('Unknown', 'Localhost') or not account.last_location:
             account.last_location = loc
         login_user(account, remember=True)
+        session['_last_activity'] = datetime.utcnow().isoformat()
         account.last_login = datetime.utcnow()
         db.session.commit()
 
@@ -178,6 +179,7 @@ def verify_device():
             if loc not in ('Unknown', 'Localhost') or not account.last_location:
                 account.last_location = loc
             login_user(account, remember=True)
+            session['_last_activity'] = datetime.utcnow().isoformat()
             account.last_login = datetime.utcnow()
             db.session.commit()
             [session.pop(k, None) for k in ['pending_patient_id', 'pending_new_device']]

@@ -189,6 +189,7 @@ def enforce_idle_timeout():
             if (now - last_dt).total_seconds() > IDLE_TIMEOUT_MINUTES * 60:
                 uid = current_user.get_id()
                 logout_user()
+                session.pop('_last_activity', None)
                 flash('Your session expired after {} minutes of inactivity. Please sign in again.'.format(IDLE_TIMEOUT_MINUTES), 'warning')
                 if str(uid).startswith('patient_'):
                     return redirect(url_for('patient_auth.login'))

@@ -334,7 +334,7 @@ def login():
                 else:
                     flash(f'Verification required. DEMO CODE: {otp} (Email error: {err})','warning')
             return redirect(url_for('auth.verify_otp'))
-        login_user(user); user.last_login = datetime.utcnow(); issue_session_token(user)
+        login_user(user); session['_last_activity'] = datetime.utcnow().isoformat(); user.last_login = datetime.utcnow(); issue_session_token(user)
         # Trusted (known) device — refresh the 30-day trust window on each login,
         # so a grandfathered device (null timestamp) starts expiring too.
         if incoming_fp and incoming_fp == user.last_fingerprint:
@@ -377,7 +377,7 @@ def verify_otp():
             # DON'T clear requires_otp — if admin forced it, keep it for every login
             db.session.commit()
             [session.pop(k,None) for k in ['pending_user_id','risk_score','risk_reason','pending_new_device']]
-            login_user(user); issue_session_token(user); db.session.commit()
+            login_user(user); session['_last_activity'] = datetime.utcnow().isoformat(); issue_session_token(user); db.session.commit()
             log_auth(user.username,'otp_success',True,user.id)
             log_act(user.id,'session_start',details=f'MFA|{user.last_location}|{user.last_device}')
             flash('Identity verified. Welcome!','success')
