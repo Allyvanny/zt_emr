@@ -482,17 +482,7 @@ def compute_risk_score(user):
     else:
         rule_weight += 0.10
 
-    # Signal 10: Many distinct resource types (weight 0.15)
-    #   Normal clinical work touches a few screens; browsing 6+ different
-    #   resource types within the window is indicative of unguided probing.
-    if features[8] >= 6:
-        rule_score += 0.15
-        rule_weight += 0.15
-        reasons.append(f'{int(features[8])} distinct resource types accessed')
-    else:
-        rule_weight += 0.15
-
-    # Signal 11: Distinct IPs in session (weight 0.10)
+    # Signal 10: Distinct IPs in session (weight 0.10)
     if features[3] >= 3:
         rule_score += 0.10
         rule_weight += 0.10
@@ -500,7 +490,7 @@ def compute_risk_score(user):
     else:
         rule_weight += 0.10
 
-    # Signal 12: First-ever login (weight 0.15)
+    # Signal 11: First-ever login (weight 0.15)
     if not known_device and not known_ip:
         rule_score += 0.15
         rule_weight += 0.15
