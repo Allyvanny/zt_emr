@@ -24,7 +24,10 @@
   };
 
   function detectLocation() {
-    if (!('geolocation' in navigator)) return;
+    if (!('geolocation' in navigator)) {
+      ipFallback();
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       async function (pos) {
@@ -90,7 +93,7 @@
           } catch (_) { /* give up silently */ }
         }
 
-        if (!detailed) return;
+        if (!detailed) { ipFallback(); return; }
 
         // ── Final cleanup: remove any remaining junk ──
         detailed = cleanLocation(detailed);
@@ -103,14 +106,16 @@
 
         const badge = document.querySelector('[data-location-display]');
         if (badge) badge.textContent = '🌍 ' + detailed;
-      } catch (e) { /* silent — falls back to IP-based location already shown */ }
+      } catch (e) { ipFallback(); }
     },
     function (err) {
-      /* Permission denied — try IP-based fallback display */
+      /* Permission denied or unavailable — fall back to public-IP lookup */
       console.warn('Geolocation denied:', err.message);
+      ipFallback();
     },
     { timeout: 10000, maximumAge: 600000, enableHighAccuracy: true }
   );
+  }
 
   /* ── Check if a location string contains a bad/misleading road name ──── */
   function hasBadRoadName(loc) {
@@ -270,5 +275,54 @@
       out.push(p);
     }
     return out.join(', ').trim();
+  }
+
+  /* ── IP-based fallback (no GPS / permission denied) ─────────────────────
+     The browser's own outbound connection has a PUBLIC IP even when the
+     server only sees localhost/LAN, so we can reverse-geocode that from
+     the client and post it. This fixes "Localhost" badges for users whose
+     browser GPS is denied, blocked, or unavailable. Display-only. */
+  async function ipFallback() {
+    try {
+      let loc = '';
+      // 1st: ipapi.co (HTTPS + CORS)
+      try {
+        const r = await fetch('https://ipapi.co/json/');
+        const d = await r.json();
+        if (d && d.city && d.city !== 'undefined') {
+          const parts = [];
+          for (const p of [d.city, d.region, d.country_name]) {
+            const v = (p || '').trim();
+            if (v && !/^(unknown|none|africa|europe|asia)$/i.test(v)) parts.push(v);
+          }
+          loc = parts.join(', ');
+        }
+      } catch (_) { /* try next */ }
+      // 2nd: ipwho.is (HTTPS + CORS)
+      if (!loc || /local/i.test(loc)) {
+        try {
+          const r2 = await fetch('https://ipwho.is/');
+          const d2 = await r2.json();
+          if (d2 && d2.success) {
+            const parts = [];
+            for (const p of [d2.city, d2.region, d2.country]) {
+              const v = (p || '').trim();
+              if (v && !/^(unknown|none|africa|europe|asia)$/i.test(v)) parts.push(v);
+            }
+            loc = parts.join(', ');
+          }
+        } catch (_) { /* give up */ }
+      }
+      loc = cleanLocation(loc);
+      if (!loc || /^(local|unknown)/i.test(loc)) return;
+
+      await fetch('/auth/refine-location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ detailed: loc })
+      });
+      const badge = document.querySelector('[data-location-display]');
+      if (badge) badge.textContent = '🌍 ' + loc;
+    } catch (e) { /* silent */ }
   }
 })();
