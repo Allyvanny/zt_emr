@@ -599,7 +599,6 @@ def check_session_risk(user):
         session['escalation_risk_score']  = risk['score']
         session['escalation_risk_reason'] = risk['reason']
         session['escalation_redirect']    = request.url
-        session['last_mfa_challenge']     = datetime.utcnow().isoformat()
         return True
     return False
 
